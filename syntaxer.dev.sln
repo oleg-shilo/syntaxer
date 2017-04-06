@@ -1,0 +1,45 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.9
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C1911DCC-6B6A-44AE-948D-8CB0A311C73C}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\CSScript.Npp\src\AgregateReleaseItems.cmd = ..\..\..\CSScript.Npp\src\AgregateReleaseItems.cmd
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Roslyn.Intellisense", "..\..\..\CS-Script.Npp\CSScript.Npp\src\Roslyn.Intellisesne\Roslyn.Intellisense\Roslyn.Intellisense.csproj", "{68062B6A-67E4-459D-9A42-97E798356C6E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Intellisense.Common", "..\..\..\CS-Script.Npp\CSScript.Npp\src\Intellisense.Interface\Intellisense.Common.csproj", "{C67D7ED7-F350-4FD4-81B5-5E635FB08765}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "syntaxer", "syntaxer.csproj", "{B3865890-F803-4287-898F-21DB18DF2732}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "syntaxer.cli", "syntaxer.cli.csproj", "{C4339132-0C24-4341-B936-1A519D5854B1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{68062B6A-67E4-459D-9A42-97E798356C6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68062B6A-67E4-459D-9A42-97E798356C6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68062B6A-67E4-459D-9A42-97E798356C6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68062B6A-67E4-459D-9A42-97E798356C6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C67D7ED7-F350-4FD4-81B5-5E635FB08765}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C67D7ED7-F350-4FD4-81B5-5E635FB08765}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C67D7ED7-F350-4FD4-81B5-5E635FB08765}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C67D7ED7-F350-4FD4-81B5-5E635FB08765}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B3865890-F803-4287-898F-21DB18DF2732}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3865890-F803-4287-898F-21DB18DF2732}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3865890-F803-4287-898F-21DB18DF2732}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3865890-F803-4287-898F-21DB18DF2732}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4339132-0C24-4341-B936-1A519D5854B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4339132-0C24-4341-B936-1A519D5854B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4339132-0C24-4341-B936-1A519D5854B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4339132-0C24-4341-B936-1A519D5854B1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

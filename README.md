@@ -1,1 +1,1 @@
-# syntaxer
+# syntaxer module for https://github.com/oleg-shilo/cs-script-sublime

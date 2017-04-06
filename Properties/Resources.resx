@@ -1,0 +1,325 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="csc_exe" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\csc.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="csc_exe_config" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\csc.exe.config;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="csc_rsp" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\csc.rsp;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="csi_exe" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\csi.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="csi_rsp" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\csi.rsp;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="CSSCodeProvider_v4_6" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn.Intellisense\CSSCodeProvider.v4.6.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Esent_Interop" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Esent.Interop.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Intellisense_Common" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn.Intellisense\Intellisense.Common.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_Build" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.Build.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_Build_Framework" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.Build.Framework.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_Build_Tasks_CodeAnalysis" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.Build.Tasks.CodeAnalysis.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_Build_Tasks_Core" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.Build.Tasks.Core.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_Build_Utilities_Core" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.Build.Utilities.Core.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_CodeAnalysis" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.CodeAnalysis.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_CodeAnalysis_CSharp" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.CodeAnalysis.CSharp.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_CodeAnalysis_CSharp_Scripting" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.CodeAnalysis.CSharp.Scripting.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_CodeAnalysis_CSharp_Workspaces" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.CodeAnalysis.CSharp.Workspaces.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_CodeAnalysis_Elfie" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.CodeAnalysis.Elfie.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_CodeAnalysis_Scripting" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.CodeAnalysis.Scripting.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_CodeAnalysis_VisualBasic" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.CodeAnalysis.VisualBasic.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_CodeAnalysis_VisualBasic_Workspaces" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.CodeAnalysis.VisualBasic.Workspaces.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_CodeAnalysis_Workspaces" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.CodeAnalysis.Workspaces.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_CodeAnalysis_Workspaces_Desktop" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.CodeAnalysis.Workspaces.Desktop.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_CodeDom_Providers_DotNetCompilerPlatform" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_CSharp_Core" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.CSharp.Core.targets;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_DiaSymReader_Native_amd64" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.DiaSymReader.Native.amd64.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_DiaSymReader_Native_x86" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.DiaSymReader.Native.x86.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_VisualBasic_Core" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.VisualBasic.Core.targets;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Microsoft_Win32_Primitives" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.Win32.Primitives.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="RoslynIntellisense" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn.Intellisense\RoslynIntellisense.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_AppContext" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.AppContext.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Collections_Immutable" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Collections.Immutable.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Composition_AttributedModel" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Composition.AttributedModel.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Composition_Convention" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Composition.Convention.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Composition_Hosting" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Composition.Hosting.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Composition_Runtime" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Composition.Runtime.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Composition_TypedParts" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Composition.TypedParts.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Console" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Console.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Diagnostics_FileVersionInfo" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Diagnostics.FileVersionInfo.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Diagnostics_Process" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Diagnostics.Process.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Diagnostics_StackTrace" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Diagnostics.StackTrace.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_IO_Compression" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.IO.Compression.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_IO_FileSystem" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.IO.FileSystem.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_IO_FileSystem_DriveInfo" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.IO.FileSystem.DriveInfo.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_IO_FileSystem_Primitives" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.IO.FileSystem.Primitives.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_IO_Pipes" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.IO.Pipes.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Reflection_Metadata" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Reflection.Metadata.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Security_AccessControl" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Security.AccessControl.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Security_Claims" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Security.Claims.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Security_Cryptography_Algorithms" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Security.Cryptography.Algorithms.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Security_Cryptography_Encoding" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Security.Cryptography.Encoding.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Security_Cryptography_Primitives" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Security.Cryptography.Primitives.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Security_Cryptography_X509Certificates" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Security.Cryptography.X509Certificates.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Security_Principal_Windows" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Security.Principal.Windows.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Text_Encoding_CodePages" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Text.Encoding.CodePages.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Threading_Tasks_Dataflow" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Threading.Tasks.Dataflow.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Threading_Thread" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Threading.Thread.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_ValueTuple" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.ValueTuple.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Xml_ReaderWriter" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Xml.ReaderWriter.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Xml_XmlDocument" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Xml.XmlDocument.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Xml_XPath" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Xml.XPath.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Xml_XPath_XDocument" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Xml.XPath.XDocument.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="vbc" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\vbc.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="vbc1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\vbc.rsp;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="VBCSCompiler" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\VBCSCompiler.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="VBCSCompiler_exe" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\VBCSCompiler.exe.config;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="vbc_exe" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\vbc.exe.config;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="Microsoft_VisualStudio_RemoteControl" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\Microsoft.VisualStudio.RemoteControl.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+</root>
