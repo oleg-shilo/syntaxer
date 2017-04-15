@@ -143,7 +143,7 @@ namespace Syntaxer
             copy("vbc.exe", syntaxer.Properties.Resources.vbc);
             copy("vbc.rsp", syntaxer.Properties.Resources.vbc1);
             copy("VBCSCompiler.exe", syntaxer.Properties.Resources.VBCSCompiler);
-            copy("VBCSCompiler.exe.config;", Encoding.UTF8.GetBytes(syntaxer.Properties.Resources.VBCSCompiler_exe));
+            copy("VBCSCompiler.exe.config", Encoding.UTF8.GetBytes(syntaxer.Properties.Resources.VBCSCompiler_exe));
             copy("vbc.exe.config", Encoding.UTF8.GetBytes(syntaxer.Properties.Resources.vbc_exe));
             copy("Microsoft.VisualStudio.RemoteControl.dll", syntaxer.Properties.Resources.Microsoft_VisualStudio_RemoteControl);
         }
