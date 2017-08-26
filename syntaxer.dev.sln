@@ -8,9 +8,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\..\..\CSScript.Npp\src\AgregateReleaseItems.cmd = ..\..\..\CSScript.Npp\src\AgregateReleaseItems.cmd
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Roslyn.Intellisense", "..\..\..\CS-Script.Npp\CSScript.Npp\src\Roslyn.Intellisesne\Roslyn.Intellisense\Roslyn.Intellisense.csproj", "{68062B6A-67E4-459D-9A42-97E798356C6E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Roslyn.Intellisense", "..\..\..\CS-Script.Npp\src\Roslyn.Intellisesne\Roslyn.Intellisense\Roslyn.Intellisense.csproj", "{68062B6A-67E4-459D-9A42-97E798356C6E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Intellisense.Common", "..\..\..\CS-Script.Npp\CSScript.Npp\src\Intellisense.Interface\Intellisense.Common.csproj", "{C67D7ED7-F350-4FD4-81B5-5E635FB08765}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Intellisense.Common", "..\..\..\CS-Script.Npp\src\Intellisense.Interface\Intellisense.Common.csproj", "{C67D7ED7-F350-4FD4-81B5-5E635FB08765}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "syntaxer", "syntaxer.csproj", "{B3865890-F803-4287-898F-21DB18DF2732}"
 EndProject

@@ -295,17 +295,17 @@
     <None Include="Roslyn.Intellisense\RoslynIntellisense.exe" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Roslyn.Intellisense\CSSCodeProvider.v4.6.dll" />
+    <None Include="Roslyn\Microsoft.VisualStudio.RemoteControl.dll" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Roslyn\Microsoft.VisualStudio.RemoteControl.dll" />
+    <None Include="Roslyn.Intellisense\CSSRoslynProvider.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>echo "$(ProjectDir)..\..\..\cs-script.npp\src\Roslyn.Intellisesne\Roslyn.Intellisense\bin\$(ConfigurationName)\RoslynIntellisense.exe"
-copy "$(ProjectDir)..\..\..\cs-script.npp\src\Roslyn.Intellisesne\Roslyn.Intellisense\bin\$(ConfigurationName)\RoslynIntellisense.exe" "$(ProjectDir)Roslyn.Intellisense\RoslynIntellisense.exe" 
-copy "$(ProjectDir)..\..\..\cs-script.npp\src\Roslyn.Intellisesne\Roslyn.Intellisense\bin\$(ConfigurationName)\RoslynIntellisense.pdb" "$(ProjectDir)Roslyn.Intellisense\RoslynIntellisense.pdb" 
-copy "$(ProjectDir)..\..\..\cs-script.npp\src\Intellisense.Interface\bin\$(ConfigurationName)\Intellisense.Common.dll" "$(ProjectDir)Roslyn.Intellisense\Intellisense.Common.dll" 
+    <PreBuildEvent>rem echo "$(ProjectDir)..\..\..\cs-script.npp\src\Roslyn.Intellisesne\Roslyn.Intellisense\bin\$(ConfigurationName)\RoslynIntellisense.exe"
+rem copy "$(ProjectDir)..\..\..\cs-script.npp\src\Roslyn.Intellisesne\Roslyn.Intellisense\bin\$(ConfigurationName)\RoslynIntellisense.exe" "$(ProjectDir)Roslyn.Intellisense\RoslynIntellisense.exe" 
+rem copy "$(ProjectDir)..\..\..\cs-script.npp\src\Roslyn.Intellisesne\Roslyn.Intellisense\bin\$(ConfigurationName)\RoslynIntellisense.pdb" "$(ProjectDir)Roslyn.Intellisense\RoslynIntellisense.pdb" 
+rem copy "$(ProjectDir)..\..\..\cs-script.npp\src\Intellisense.Interface\bin\$(ConfigurationName)\Intellisense.Common.dll" "$(ProjectDir)Roslyn.Intellisense\Intellisense.Common.dll" 
 </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>

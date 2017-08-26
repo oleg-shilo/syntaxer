@@ -133,9 +133,6 @@
   <data name="csi_rsp" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Roslyn\csi.rsp;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="CSSCodeProvider_v4_6" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Roslyn.Intellisense\CSSCodeProvider.v4.6.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="Esent_Interop" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Roslyn\Esent.Interop.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
@@ -321,5 +318,8 @@
   </data>
   <data name="Microsoft_VisualStudio_RemoteControl" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Roslyn\Microsoft.VisualStudio.RemoteControl.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="CSSRoslynProvider" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn.Intellisense\CSSRoslynProvider.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>

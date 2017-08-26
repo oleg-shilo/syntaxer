@@ -63,10 +63,10 @@ namespace Syntaxer
             }
         }
 
+        static char[] delimiters = "\\\t\n\r .,:;'\"=[]{}()+-/!?@$%^&*«»><#|~`".ToCharArray();
+
         public static string WordAt(this string text, int index)
         {
-            var delimiters = "\t \r\n".ToCharArray();
-
             int start = text.Substring(0, index).LastIndexOfAny(delimiters) + 1;
             int end = text.Substring(index).IndexOfAny(delimiters);
 
@@ -92,8 +92,6 @@ namespace Syntaxer
 
             return text.Substring(start, end - start).Trim();
         }
-
-
 
         public static string DeleteDirFiles(this string dir, string pattern)
         {
@@ -144,7 +142,6 @@ namespace Syntaxer
             return Encoding.UTF8.GetString(data);
         }
 
-
         public static byte[] ReadAllBytes(this TcpClient client)
         {
             var bytes = new byte[client.ReceiveBufferSize];
@@ -166,6 +163,7 @@ namespace Syntaxer
             stream.Write(data, 0, data.Length);
             stream.Flush();
         }
+
         public static void WriteAllText(this TcpClient client, string data)
         {
             client.WriteAllBytes(data.GetBytes());
@@ -184,7 +182,7 @@ namespace Syntaxer
             {
                 processIndexdName = index == 0 ? processName : processName + "#" + index;
                 var processId = new PerformanceCounter("Process", "ID Process", processIndexdName);
-                if ((int) processId.NextValue() == pid)
+                if ((int)processId.NextValue() == pid)
                 {
                     return processIndexdName;
                 }
@@ -196,7 +194,7 @@ namespace Syntaxer
         static Process FindPidFromIndexedProcessName(string indexedProcessName)
         {
             var parentId = new PerformanceCounter("Process", "Creating Process ID", indexedProcessName);
-            return Process.GetProcessById((int) parentId.NextValue());
+            return Process.GetProcessById((int)parentId.NextValue());
         }
 
         public static Process Parent(this Process process)
@@ -244,7 +242,6 @@ namespace Syntaxer
 
             return -1;
         }
-
     }
 
     static class FileExtensions
@@ -378,6 +375,7 @@ namespace Syntaxer
                 return 0;
             }
         }
+
         static bool IsMeaningfull(char c, bool countLineBreaks = false)
         {
             if (countLineBreaks)
@@ -399,7 +397,6 @@ namespace Syntaxer
 
                 if (i == pos)
                     break;
-
             }
 
             return syntaxLength;

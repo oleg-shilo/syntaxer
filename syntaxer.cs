@@ -12,17 +12,20 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Intellisense.Common;
 using RoslynIntellisense;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.MSBuild;
 
 //using csscript;
 
-// Shockingly there is no one trully transparent IPC solution for Win, Linux, Mac
+// Shockingly there is no one truly transparent IPC solution for Win, Linux, Mac
 // - Named-pipes are not implemented on Linux
-// - Sockets seems to be a good portable approach but they claim port (not a bigi though)
-// but on Windows will require granting special permissions. "Frightening" confirmation dialog
-// is not a good UX.
-// - Unix domain socket plays the same role as named-pipes but with Socket interface: not portable
+// - Sockets seems to be a good portable approach but they claim port (no biggie though)
+// but on Windows opening socket server will require granting special permissions. Meaning a
+// "frightening" confirmation dialog that is not a good for UX.
+//  - Unix domain socket plays the same role as named-pipes but with Socket interface: not portable
 // on Win and create file anyway. BTW the file that may be left on the system:
-// http://mono.1490590.n4.nabble.com/Unix-domain-sockets-on-mono-td1490601.html
+//  http://mono.1490590.n4.nabble.com/Unix-domain-sockets-on-mono-td1490601.html
 // - Unix-pipes then closest Win named-pipes equivalent are still OS specific and create a file as well.
 // ---------------------
 // Bottom line: the only a compromise solution, which is simple and portable is to use a plain socket.
@@ -37,20 +40,43 @@ namespace Syntaxer
     {
         static void Main(string[] args)
         {
-            //Preload();
-            Deploy();
-            Run(args);
-            if (asms.Any())
-                asms.Clear();
-        }
-
-        static void Run(string[] args)
-        {
             var input = new Args(args);
 
+            // -listen -timeout:60000 -cscs_path:./cscs.exe
+
+            if (Environment.OSVersion.Platform.ToString().StartsWith("Win"))
+            {
+                DeployRoslyn();
+            }
+            else
+            {
+                mono_root = typeof(string).Assembly.Location.GetDirName();
+                LoadRoslyn();
+
+                AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
+            }
+
+            Run(input);
+        }
+
+        static string mono_root;
+
+        private static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            return Probe(mono_root, args.Name) ??
+                   Probe(mono_root.PathJoin("Fasades"), args.Name);
+
+            // return Probe("/usr/lib/mono/4.5", args.Name) ??
+            //        Probe("/usr/lib/mono/4.5/Fasades", args.Name) ??
+            //        Probe("/home/user/.vscode/extensions/ms-vscode.csharp-1.12.1/.omnisharp/omnisharp", args.Name);
+        }
+
+        static void Run(Args input)
+        {
             if (input.test)
             {
-                TestFormat();
+                // TestFormat();
+                // TestProject();
                 TestCompletion();
             }
             else
@@ -59,128 +85,100 @@ namespace Syntaxer
                     csscript.cscs_path = input.cscs_path;
 
                 if (input.listen)
-                {
                     SocketServer.Listen(input);
-                }
                 else
                     Console.WriteLine(SyntaxProvider.ProcessRequest(input));
             }
         }
 
-        static List<object> asms = new List<object>();
-
-        static void Deploy()
+        static void DeployRoslyn()
         {
             var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
 
-            Action<string, byte[]> copy = (name, bytes) =>
-            {
-                try { File.WriteAllBytes(Path.Combine(dir, name), bytes); } catch { }
-            };
-
-            copy("CSSCodeProvider.v4.6.dll", syntaxer.Properties.Resources.CSSCodeProvider_v4_6);
-            copy("Intellisense.Common.dll", syntaxer.Properties.Resources.Intellisense_Common);
-            copy("RoslynIntellisense.dll", syntaxer.Properties.Resources.RoslynIntellisense);
-            copy("csc.exe", syntaxer.Properties.Resources.csc_exe);
-            copy("csc.exe.config", Encoding.UTF8.GetBytes(syntaxer.Properties.Resources.csc_exe_config));
-            copy("csc.rsp", syntaxer.Properties.Resources.csc_rsp);
-            copy("csi.exe", syntaxer.Properties.Resources.csi_exe);
-            copy("csi.rsp", syntaxer.Properties.Resources.csi_rsp);
-            copy("Esent.Interop.dll", syntaxer.Properties.Resources.Esent_Interop);
-            copy("Microsoft.Build.dll", syntaxer.Properties.Resources.Microsoft_Build);
-            copy("Microsoft.Build.Framework.dll", syntaxer.Properties.Resources.Microsoft_Build_Framework);
-            copy("Microsoft.Build.Tasks.CodeAnalysis.dll", syntaxer.Properties.Resources.Microsoft_Build_Tasks_CodeAnalysis);
-            copy("Microsoft.Build.Tasks.Core.dll", syntaxer.Properties.Resources.Microsoft_Build_Tasks_Core);
-            copy("Microsoft.Build.Utilities.Core.dll", syntaxer.Properties.Resources.Microsoft_Build_Utilities_Core);
-            copy("Microsoft.CodeAnalysis.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis);
-            copy("Microsoft.CodeAnalysis.CSharp.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_CSharp);
-            copy("Microsoft.CodeAnalysis.CSharp.Scripting.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_CSharp_Scripting);
-            copy("Microsoft.CodeAnalysis.CSharp.Workspaces.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_CSharp_Workspaces);
-            copy("Microsoft.CodeAnalysis.Elfie.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_Elfie);
-            copy("Microsoft.CodeAnalysis.Scripting.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_Scripting);
-            copy("Microsoft.CodeAnalysis.VisualBasic.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_VisualBasic);
-            copy("Microsoft.CodeAnalysis.VisualBasic.Workspaces.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_VisualBasic_Workspaces);
-            copy("Microsoft.CodeAnalysis.Workspaces.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_Workspaces);
-            copy("Microsoft.CodeAnalysis.Workspaces.Desktop.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_Workspaces_Desktop);
-            copy("Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll", syntaxer.Properties.Resources.Microsoft_CodeDom_Providers_DotNetCompilerPlatform);
-            copy("Microsoft.CSharp.Core.targets", syntaxer.Properties.Resources.Microsoft_CSharp_Core);
-            copy("Microsoft.DiaSymReader.Native.amd64.dll", syntaxer.Properties.Resources.Microsoft_DiaSymReader_Native_amd64);
-            copy("Microsoft.DiaSymReader.Native.x86.dll", syntaxer.Properties.Resources.Microsoft_DiaSymReader_Native_x86);
-            copy("Microsoft.VisualBasic.Core.targets", syntaxer.Properties.Resources.Microsoft_VisualBasic_Core);
-            copy("Microsoft.Win32.Primitives.dll", syntaxer.Properties.Resources.Microsoft_Win32_Primitives);
-            copy("System.AppContext.dll", syntaxer.Properties.Resources.System_AppContext);
-            copy("System.Collections.Immutable.dll", syntaxer.Properties.Resources.System_Collections_Immutable);
-            copy("System.Composition.AttributedModel.dll", syntaxer.Properties.Resources.System_Composition_AttributedModel);
-            copy("System.Composition.Convention.dll", syntaxer.Properties.Resources.System_Composition_Convention);
-            copy("System.Composition.Hosting.dll", syntaxer.Properties.Resources.System_Composition_Hosting);
-            copy("System.Composition.Runtime.dll", syntaxer.Properties.Resources.System_Composition_Runtime);
-            copy("System.Composition.TypedParts.dll", syntaxer.Properties.Resources.System_Composition_TypedParts);
-            copy("System.Console.dll", syntaxer.Properties.Resources.System_Console);
-            copy("System.Diagnostics.FileVersionInfo.dll", syntaxer.Properties.Resources.System_Diagnostics_FileVersionInfo);
-            copy("System.Diagnostics.Process.dll", syntaxer.Properties.Resources.System_Diagnostics_Process);
-            copy("System.Diagnostics.StackTrace.dll", syntaxer.Properties.Resources.System_Diagnostics_StackTrace);
-            copy("System.IO.Compression.dll", syntaxer.Properties.Resources.System_IO_Compression);
-            copy("System.IO.FileSystem.dll", syntaxer.Properties.Resources.System_IO_FileSystem);
-            copy("System.IO.FileSystem.DriveInfo.dll", syntaxer.Properties.Resources.System_IO_FileSystem_DriveInfo);
-            copy("System.IO.FileSystem.Primitives.dll", syntaxer.Properties.Resources.System_IO_FileSystem_Primitives);
-            copy("System.IO.Pipes.dll", syntaxer.Properties.Resources.System_IO_Pipes);
-            copy("System.Reflection.Metadata.dll", syntaxer.Properties.Resources.System_Reflection_Metadata);
-            copy("System.Security.AccessControl.dll", syntaxer.Properties.Resources.System_Security_AccessControl);
-            copy("System.Security.Claims.dll", syntaxer.Properties.Resources.System_Security_Claims);
-            copy("System.Security.Cryptography.Algorithms.dll", syntaxer.Properties.Resources.System_Security_Cryptography_Algorithms);
-            copy("System.Security.Cryptography.Encoding.dll", syntaxer.Properties.Resources.System_Security_Cryptography_Encoding);
-            copy("System.Security.Cryptography.Primitives.dll", syntaxer.Properties.Resources.System_Security_Cryptography_Primitives);
-            copy("System.Security.Cryptography.X509Certificates.dll", syntaxer.Properties.Resources.System_Security_Cryptography_X509Certificates);
-            copy("System.Security.Principal.Windows.dll", syntaxer.Properties.Resources.System_Security_Principal_Windows);
-            copy("System.Text.Encoding.CodePages.dll", syntaxer.Properties.Resources.System_Text_Encoding_CodePages);
-            copy("System.Threading.Tasks.Dataflow.dll", syntaxer.Properties.Resources.System_Threading_Tasks_Dataflow);
-            copy("System.Threading.Thread.dll", syntaxer.Properties.Resources.System_Threading_Thread);
-            copy("System.ValueTuple.dll", syntaxer.Properties.Resources.System_ValueTuple);
-            copy("System.Xml.ReaderWriter.dll", syntaxer.Properties.Resources.System_Xml_ReaderWriter);
-            copy("System.Xml.XmlDocument.dll", syntaxer.Properties.Resources.System_Xml_XmlDocument);
-            copy("System.Xml.XPath.dll", syntaxer.Properties.Resources.System_Xml_XPath);
-            copy("System.Xml.XPath.XDocument.dll", syntaxer.Properties.Resources.System_Xml_XPath_XDocument);
-            copy("vbc.exe", syntaxer.Properties.Resources.vbc);
-            copy("vbc.rsp", syntaxer.Properties.Resources.vbc1);
-            copy("VBCSCompiler.exe", syntaxer.Properties.Resources.VBCSCompiler);
-            copy("VBCSCompiler.exe.config", Encoding.UTF8.GetBytes(syntaxer.Properties.Resources.VBCSCompiler_exe));
-            copy("vbc.exe.config", Encoding.UTF8.GetBytes(syntaxer.Properties.Resources.vbc_exe));
-            copy("Microsoft.VisualStudio.RemoteControl.dll", syntaxer.Properties.Resources.Microsoft_VisualStudio_RemoteControl);
+            ForEachRoslynAssembly((name, bytes) =>
+                File.WriteAllBytes(Path.Combine(dir, name), bytes));
         }
 
-        static void Preload()
+        static void LoadRoslyn()
         {
-            //if (Environment.OSVersion.Platform.ToString().StartsWith("Win"))
-            //    return;
+            ForEachRoslynAssembly((name, bytes) =>
+                Assembly.Load(bytes));
+        }
 
-            // On Linux AssemblyResolve may not be fired for all assemblies if running under ST3 runtime.
-            // So pre-load them at the startup.
+        static void ForEachRoslynAssembly(Action<string, byte[]> action)
+        {
+            Action<string, byte[]> _action = (name, bytes) =>
+            {
+                try { action(name, bytes); } catch { }
+            };
 
-            //var asm = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Microsoft.Build.Tasks.Core.dll");
-            //if (!File.Exists(asm))
-            //    File.WriteAllBytes(asm, syntaxer.Properties.Resources.Microsoft_Build_Tasks_Core);
-
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.Microsoft_Build_Tasks_Core));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.Microsoft_CodeAnalysis));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.Microsoft_CodeAnalysis_Workspaces));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.Microsoft_Build));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.Microsoft_Build_Engine));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.Microsoft_Build_Framework));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.Microsoft_Build_Tasks_Core));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.Microsoft_Build_Utilities_Core));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.Microsoft_CodeAnalysis_CSharp));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.Microsoft_CodeAnalysis_CSharp_Workspaces));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.Microsoft_CodeAnalysis_VisualBasic_Workspaces));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.Microsoft_CodeAnalysis_VisualBasic));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.Microsoft_CodeAnalysis_Workspaces_Desktop));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.System_Composition_AttributedModel));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.System_Composition_Hosting));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.System_Composition_Runtime));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.System_Composition_TypedParts));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.System_Reflection_Metadata));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.RoslynIntellisense));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.Intellisense_Common));
-            //asms.Add(Assembly.Load(syntaxer.Properties.Resources.System_Collections_Immutable));
+            // _action("CSSRoslynProvider.dll", syntaxer.Properties.Resources.CSSRoslynProvider);
+            // _action("Intellisense.Common.dll", syntaxer.Properties.Resources.Intellisense_Common);
+            // _action("RoslynIntellisense.exe", syntaxer.Properties.Resources.RoslynIntellisense);
+            _action("csc.exe", syntaxer.Properties.Resources.csc_exe);
+            _action("csc.exe.config", Encoding.UTF8.GetBytes(syntaxer.Properties.Resources.csc_exe_config));
+            _action("csc.rsp", syntaxer.Properties.Resources.csc_rsp);
+            _action("csi.exe", syntaxer.Properties.Resources.csi_exe);
+            _action("csi.rsp", syntaxer.Properties.Resources.csi_rsp);
+            _action("Esent.Interop.dll", syntaxer.Properties.Resources.Esent_Interop);
+            _action("Microsoft.Build.dll", syntaxer.Properties.Resources.Microsoft_Build);
+            _action("Microsoft.Build.Framework.dll", syntaxer.Properties.Resources.Microsoft_Build_Framework);
+            _action("Microsoft.Build.Tasks.CodeAnalysis.dll", syntaxer.Properties.Resources.Microsoft_Build_Tasks_CodeAnalysis);
+            _action("Microsoft.Build.Tasks.Core.dll", syntaxer.Properties.Resources.Microsoft_Build_Tasks_Core);
+            _action("Microsoft.Build.Utilities.Core.dll", syntaxer.Properties.Resources.Microsoft_Build_Utilities_Core);
+            _action("Microsoft.CodeAnalysis.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis);
+            _action("Microsoft.CodeAnalysis.CSharp.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_CSharp);
+            _action("Microsoft.CodeAnalysis.CSharp.Scripting.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_CSharp_Scripting);
+            _action("Microsoft.CodeAnalysis.CSharp.Workspaces.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_CSharp_Workspaces);
+            _action("Microsoft.CodeAnalysis.Elfie.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_Elfie);
+            _action("Microsoft.CodeAnalysis.Scripting.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_Scripting);
+            _action("Microsoft.CodeAnalysis.VisualBasic.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_VisualBasic);
+            _action("Microsoft.CodeAnalysis.VisualBasic.Workspaces.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_VisualBasic_Workspaces);
+            _action("Microsoft.CodeAnalysis.Workspaces.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_Workspaces);
+            _action("Microsoft.CodeAnalysis.Workspaces.Desktop.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_Workspaces_Desktop);
+            _action("Microsoft.CSharp.Core.targets", syntaxer.Properties.Resources.Microsoft_CSharp_Core);
+            _action("Microsoft.DiaSymReader.Native.amd64.dll", syntaxer.Properties.Resources.Microsoft_DiaSymReader_Native_amd64);
+            _action("Microsoft.DiaSymReader.Native.x86.dll", syntaxer.Properties.Resources.Microsoft_DiaSymReader_Native_x86);
+            _action("Microsoft.VisualBasic.Core.targets", syntaxer.Properties.Resources.Microsoft_VisualBasic_Core);
+            _action("Microsoft.Win32.Primitives.dll", syntaxer.Properties.Resources.Microsoft_Win32_Primitives);
+            _action("System.AppContext.dll", syntaxer.Properties.Resources.System_AppContext);
+            _action("System.Collections.Immutable.dll", syntaxer.Properties.Resources.System_Collections_Immutable);
+            _action("System.Composition.AttributedModel.dll", syntaxer.Properties.Resources.System_Composition_AttributedModel);
+            _action("System.Composition.Convention.dll", syntaxer.Properties.Resources.System_Composition_Convention);
+            _action("System.Composition.Hosting.dll", syntaxer.Properties.Resources.System_Composition_Hosting);
+            _action("System.Composition.Runtime.dll", syntaxer.Properties.Resources.System_Composition_Runtime);
+            _action("System.Composition.TypedParts.dll", syntaxer.Properties.Resources.System_Composition_TypedParts);
+            _action("System.Console.dll", syntaxer.Properties.Resources.System_Console);
+            _action("System.Diagnostics.FileVersionInfo.dll", syntaxer.Properties.Resources.System_Diagnostics_FileVersionInfo);
+            _action("System.Diagnostics.Process.dll", syntaxer.Properties.Resources.System_Diagnostics_Process);
+            _action("System.Diagnostics.StackTrace.dll", syntaxer.Properties.Resources.System_Diagnostics_StackTrace);
+            _action("System.IO.Compression.dll", syntaxer.Properties.Resources.System_IO_Compression);
+            _action("System.IO.FileSystem.dll", syntaxer.Properties.Resources.System_IO_FileSystem);
+            _action("System.IO.FileSystem.DriveInfo.dll", syntaxer.Properties.Resources.System_IO_FileSystem_DriveInfo);
+            _action("System.IO.FileSystem.Primitives.dll", syntaxer.Properties.Resources.System_IO_FileSystem_Primitives);
+            _action("System.IO.Pipes.dll", syntaxer.Properties.Resources.System_IO_Pipes);
+            _action("System.Reflection.Metadata.dll", syntaxer.Properties.Resources.System_Reflection_Metadata);
+            _action("System.Security.AccessControl.dll", syntaxer.Properties.Resources.System_Security_AccessControl);
+            _action("System.Security.Claims.dll", syntaxer.Properties.Resources.System_Security_Claims);
+            _action("System.Security.Cryptography.Algorithms.dll", syntaxer.Properties.Resources.System_Security_Cryptography_Algorithms);
+            _action("System.Security.Cryptography.Encoding.dll", syntaxer.Properties.Resources.System_Security_Cryptography_Encoding);
+            _action("System.Security.Cryptography.Primitives.dll", syntaxer.Properties.Resources.System_Security_Cryptography_Primitives);
+            _action("System.Security.Cryptography.X509Certificates.dll", syntaxer.Properties.Resources.System_Security_Cryptography_X509Certificates);
+            _action("System.Security.Principal.Windows.dll", syntaxer.Properties.Resources.System_Security_Principal_Windows);
+            _action("System.Text.Encoding.CodePages.dll", syntaxer.Properties.Resources.System_Text_Encoding_CodePages);
+            _action("System.Threading.Tasks.Dataflow.dll", syntaxer.Properties.Resources.System_Threading_Tasks_Dataflow);
+            _action("System.Threading.Thread.dll", syntaxer.Properties.Resources.System_Threading_Thread);
+            _action("System.ValueTuple.dll", syntaxer.Properties.Resources.System_ValueTuple);
+            _action("System.Xml.ReaderWriter.dll", syntaxer.Properties.Resources.System_Xml_ReaderWriter);
+            _action("System.Xml.XmlDocument.dll", syntaxer.Properties.Resources.System_Xml_XmlDocument);
+            _action("System.Xml.XPath.dll", syntaxer.Properties.Resources.System_Xml_XPath);
+            _action("System.Xml.XPath.XDocument.dll", syntaxer.Properties.Resources.System_Xml_XPath_XDocument);
+            _action("vbc.exe", syntaxer.Properties.Resources.vbc);
+            _action("vbc.rsp", syntaxer.Properties.Resources.vbc1);
+            _action("VBCSCompiler.exe", syntaxer.Properties.Resources.VBCSCompiler);
+            _action("VBCSCompiler.exe.config", Encoding.UTF8.GetBytes(syntaxer.Properties.Resources.VBCSCompiler_exe));
+            _action("vbc.exe.config", Encoding.UTF8.GetBytes(syntaxer.Properties.Resources.vbc_exe));
+            _action("Microsoft.VisualStudio.RemoteControl.dll", syntaxer.Properties.Resources.Microsoft_VisualStudio_RemoteControl);
         }
 
         static void TestFormat()
@@ -188,6 +186,9 @@ namespace Syntaxer
             Console.Write("Formatting: ");
             try
             {
+                // var dummyWorkspace = MSBuildWorkspace.Create();
+                // SyntaxTree tree = CSharpSyntaxTree.ParseText(SyntaxProvider.testCode.Trim());
+                // SyntaxNode root = Microsoft.CodeAnalysis.Formatting.Formatter.Format(tree.GetRoot(), dummyWorkspace);
                 RoslynIntellisense.Formatter.FormatHybrid(SyntaxProvider.testCode, "code.cs");
                 Console.WriteLine("OK");
             }
@@ -195,6 +196,43 @@ namespace Syntaxer
             {
                 Console.WriteLine("failed");
                 Console.WriteLine(e);
+            }
+        }
+
+        static void TestProject()
+        {
+            Console.WriteLine("Generating project: ");
+            var script = Path.GetTempFileName();
+            try
+            {
+                var currDir = Assembly.GetExecutingAssembly().Location.GetDirName();
+                var cscs = currDir.PathJoin("cscs.exe");
+                if (File.Exists(cscs))
+                    csscript.cscs_path = cscs;
+                else
+                {
+                    cscs = currDir.GetDirName().PathJoin("cscs.exe");
+                    if (File.Exists(cscs))
+                        csscript.cscs_path = cscs;
+                    else
+                        csscript.cscs_path = "./cscs.exe";
+                }
+
+                Project project = CSScriptHelper.GenerateProjectFor(script);
+                project.Files.ToList().ForEach(x => Console.WriteLine("    file: " + x));
+                project.Refs.ToList().ForEach(x => Console.WriteLine("    ref: " + x));
+                project.SearchDirs.ToList().ForEach(x => Console.WriteLine("    searchDir: " + x));
+
+                Console.WriteLine("OK - " + project.Files.Concat(project.Refs).Concat(project.SearchDirs).Count() + " project item(s)");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("failed");
+                Console.WriteLine(e);
+            }
+            finally
+            {
+                try { File.Delete(script); } catch { }
             }
         }
 
@@ -217,13 +255,15 @@ namespace Syntaxer
                         csscript.cscs_path = "./cscs.exe";
                 }
 
-                string code = SyntaxProvider.testCode;
+                // // string code = SyntaxProvider.testCode;
+                // string code = SyntaxProvider.testCode7;
+                string code = SyntaxProvider.testCode7b;
 
                 File.WriteAllText(script, code);
 
-                IEnumerable<ICompletionData> completions = null;
-
                 var caret = 315;
+                caret = 464;
+                caret = code.IndexOf("info.ver") + "info.ver".Length;
                 string word = code.WordAt(caret);
 
                 Project project = CSScriptHelper.GenerateProjectFor(script);
@@ -232,10 +272,12 @@ namespace Syntaxer
                                      .Select(f => new Tuple<string, string>(File.ReadAllText(f), f))
                                      .ToArray();
 
-                completions = Autocompleter.GetAutocompletionFor(code, caret, project.Refs, sources);
-                var count = completions.Count();
+                IEnumerable<ICompletionData> completions = null;
 
-                Console.WriteLine("OK");
+                completions = Autocompleter.GetAutocompletionFor(code, caret, project.Refs, sources);
+                var count = completions.Count(x => x.CompletionText.StartsWith(word));
+                Console.WriteLine("OK - " + count + " completion item(s)...");
+                Console.WriteLine("    '" + completions.Select(x => x.CompletionText).FirstOrDefault(x => x.StartsWith(word)) + "'");
             }
             catch (Exception e)
             {
@@ -248,8 +290,6 @@ namespace Syntaxer
             }
         }
 
-        //static string probingDir = @"E:\Galos\Projects\CS-Script.Sublime\src\syntaxer\bin\Debug\Roslyn";
-
         static Assembly Probe(string dir, string asmName)
         {
             var file = Path.Combine(dir, asmName.Split(',')[0] + ".dll");
@@ -257,11 +297,6 @@ namespace Syntaxer
                 return Assembly.LoadFrom(file);
             else
                 return null;
-        }
-
-        static System.Reflection.Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
-        {
-            return null;
         }
     }
 
@@ -301,7 +336,6 @@ namespace Syntaxer
                 Task.Run(() => MonitorConnections(processArgs.timeout, requestShutdown: serverSocket.Stop));
 
                 Console.WriteLine($" >> Server Started (port={processArgs.port})");
-                //Console.WriteLine($" >> Syntax engine is about to be loaded");
                 new Engine().Preload();
                 Console.WriteLine($" >> Syntax engine loaded");
 
@@ -521,7 +555,7 @@ namespace Syntaxer
                                  .Where(f => f != script)
                                  .Select(f => new Tuple<string, string>(File.ReadAllText(f), f));
 
-            var regions = Autocompleter.GetNamespacesFor(code, word, project.Refs, sources).Result;
+            var regions = Autocompleter.GetNamespacesFor(code, word, project.Refs, sources);
 
             return regions.Select(x => x.Namespace).JoinBy("\n");
         }
@@ -622,7 +656,7 @@ namespace Syntaxer
                     if (item.HasOverloads)
                     {
                         display += "(...)";
-                        completion += "(";
+                        //completion += "(";
                     }
                     else
                     {
@@ -634,7 +668,7 @@ namespace Syntaxer
                         else
                         {
                             display += "(..)";
-                            completion += "(";
+                            //completion += "(";
                         }
                     }
                 }
@@ -749,6 +783,57 @@ class Script
         {
         	var t = args[0].Length.ToString().GetHashCode();
             Console.WriteLine(args[i]);
+        }
+    }
+}";
+
+        public static string testCode7b = @"
+using System;
+using System.Linq;
+using System.Collections.Generic;
+using static dbg; // to use 'print' instead of 'dbg.print'
+
+class Script
+{
+    static public void Main(string[] args)
+    {
+        (string message, int version) setup_say_hello()
+        {
+            return (""Hello from C#"", 7);
+        }
+
+        var info = setup_say_hello();
+
+        print(info.message, info.version);
+
+        print(Environment.GetEnvironmentVariables()
+                            .Cast<object>()
+                            .Take(5));
+    }
+}";
+
+        public static string testCode7 = @"using System;
+using System.Windows.Forms;
+
+class Script
+{
+    [STAThread]
+    static public void Main(string[] args)
+    {
+        MessageBox.Show(""Just a test!"");
+
+        for (int i = 0; i<args.Length; i++)
+        {
+        	var t = args[0].Length.ToString().GetHashCode();
+            Console.WriteLine(args[i]);
+
+            void test()
+            {
+                Console.WriteLine(""Local function - C#7"");
+            }
+
+            tes
+            // var tup = (1,2);
         }
     }
 }";

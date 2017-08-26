@@ -120,9 +120,9 @@ namespace syntaxer.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] CSSCodeProvider_v4_6 {
+        internal static byte[] CSSRoslynProvider {
             get {
-                object obj = ResourceManager.GetObject("CSSCodeProvider_v4_6", resourceCulture);
+                object obj = ResourceManager.GetObject("CSSRoslynProvider", resourceCulture);
                 return ((byte[])(obj));
             }
         }
