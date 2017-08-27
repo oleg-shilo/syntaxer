@@ -112,6 +112,21 @@ namespace Syntaxer
                 return null;
             }
 
+            static object cscs_GenerateProjectFor(string script)
+            {
+                var type = csscript.Cscs_asm.GetLoadableTypes().Where(t => t.Name == "ProjectBuilder").FirstOrDefault();
+                csscript.Cscs_asm.GetLoadableTypes().Where(t => t.Name == "ProjectBuilder").FirstOrDefault();
+                MethodInfo method = type.GetMethod("GenerateProjectFor", BindingFlags.Public | BindingFlags.Static);
+                return method.Invoke(null, new object[] { script });
+            }
+
+            static string cscs_GetScriptTempDir()
+            {
+                return (string)csscript.Cscs_asm.GetLoadableTypes().Where(t => t.Name == "CSExecutor").First()
+                                                   .GetMethod("GetScriptTempDir", BindingFlags.Public | BindingFlags.Static)
+                                                   .Invoke(null, new object[0]);
+            }
+
             static public Project GenerateProjectFor(string script)
             {
                 //csscript.ProjectBuilder.GenerateProjectFor(script);
@@ -120,13 +135,16 @@ namespace Syntaxer
                     if (csscript.Cscs_asm == null)
                         throw new Exception($"cscs.exe assembly is not loaded ({csscript.cscs_path}).");
 
-                    var type = csscript.Cscs_asm.GetLoadableTypes().Where(t => t.Name == "ProjectBuilder").FirstOrDefault();
-                    MethodInfo method = type.GetMethod("GenerateProjectFor", BindingFlags.Public | BindingFlags.Static);
-                    object proj = method.Invoke(null, new object[] { script });
+                    var dbg_interface_file = Path.Combine(cscs_GetScriptTempDir(), "Cache", "dbg.cs");
+
+                    object proj = cscs_GenerateProjectFor(script);
                     Type projType = proj.GetType();
+
+                    string[] includes = (string[])projType.GetField("Files").GetValue(proj);
+
                     return new Project
                     {
-                        Files = (string[])projType.GetField("Files").GetValue(proj),
+                        Files = includes.Concat(new[] { dbg_interface_file }).ToArray(),
                         Refs = (string[])projType.GetField("Refs").GetValue(proj),
                         SearchDirs = (string[])projType.GetField("SearchDirs").GetValue(proj),
                         Script = (string)projType.GetField("Script").GetValue(proj)
@@ -274,7 +292,7 @@ namespace Syntaxer
 
         static public bool NeedsAutoclassWrapper(string text)
         {
-            csscript.Log("NeedsAutoclassWrapper");
+            // csscript.Log("NeedsAutoclassWrapper");
 
             bool isAutoClassSupported = false;
             try

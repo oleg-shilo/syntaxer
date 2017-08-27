@@ -12,9 +12,11 @@ namespace Syntaxer
         {
             this.InitFromArgs(args);
         }
+
         public bool listen;
         public bool exit;
         public bool test;
+        public bool dr; // deploy roslyn
         public string[] @ref;
         public string cmd;
         public string script;

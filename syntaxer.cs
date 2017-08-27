@@ -40,21 +40,26 @@ namespace Syntaxer
     {
         static void Main(string[] args)
         {
+            DeployCSScriptIntegration();
+
             var input = new Args(args);
 
-            // -listen -timeout:60000 -cscs_path:./cscs.exe
+            if (input.dr)
+                DeployRoslyn();
 
+            // -listen -timeout:60000 -cscs_path:./cscs.exe
             if (Environment.OSVersion.Platform.ToString().StartsWith("Win"))
             {
                 DeployRoslyn();
             }
             else
             {
-                mono_root = typeof(string).Assembly.Location.GetDirName();
+                // LoadCSScriptIntegration();
                 LoadRoslyn();
-
-                AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
             }
+            mono_root = Path.GetDirectoryName(typeof(string).Assembly.Location);
+            Console.WriteLine(mono_root);
+            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
 
             Run(input);
         }
@@ -75,9 +80,10 @@ namespace Syntaxer
         {
             if (input.test)
             {
+                TestResolving();
                 // TestFormat();
                 // TestProject();
-                TestCompletion();
+                // TestCompletion();
             }
             else
             {
@@ -99,10 +105,35 @@ namespace Syntaxer
                 File.WriteAllBytes(Path.Combine(dir, name), bytes));
         }
 
+        static void DeployCSScriptIntegration()
+        {
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
+
+            ForEachCSScriptAssembly((name, bytes) =>
+                File.WriteAllBytes(Path.Combine(dir, name), bytes));
+        }
+
+        static void LoadCSScriptIntegration()
+        {
+            ForEachCSScriptAssembly((name, bytes) =>
+                Assembly.Load(bytes));
+        }
+
         static void LoadRoslyn()
         {
             ForEachRoslynAssembly((name, bytes) =>
                 Assembly.Load(bytes));
+        }
+
+        static void ForEachCSScriptAssembly(Action<string, byte[]> action)
+        {
+            Action<string, byte[]> _action = (name, bytes) =>
+            {
+                try { action(name, bytes); } catch { }
+            };
+            // _action("CSSRoslynProvider.dll", syntaxer.Properties.Resources.CSSRoslynProvider);
+            _action("Intellisense.Common.dll", syntaxer.Properties.Resources.Intellisense_Common);
+            _action("RoslynIntellisense.exe", syntaxer.Properties.Resources.RoslynIntellisense);
         }
 
         static void ForEachRoslynAssembly(Action<string, byte[]> action)
@@ -112,9 +143,6 @@ namespace Syntaxer
                 try { action(name, bytes); } catch { }
             };
 
-            // _action("CSSRoslynProvider.dll", syntaxer.Properties.Resources.CSSRoslynProvider);
-            // _action("Intellisense.Common.dll", syntaxer.Properties.Resources.Intellisense_Common);
-            // _action("RoslynIntellisense.exe", syntaxer.Properties.Resources.RoslynIntellisense);
             _action("csc.exe", syntaxer.Properties.Resources.csc_exe);
             _action("csc.exe.config", Encoding.UTF8.GetBytes(syntaxer.Properties.Resources.csc_exe_config));
             _action("csc.rsp", syntaxer.Properties.Resources.csc_rsp);
@@ -256,14 +284,11 @@ namespace Syntaxer
                 }
 
                 // // string code = SyntaxProvider.testCode;
-                // string code = SyntaxProvider.testCode7;
                 string code = SyntaxProvider.testCode7b;
 
                 File.WriteAllText(script, code);
 
-                var caret = 315;
-                caret = 464;
-                caret = code.IndexOf("info.ver") + "info.ver".Length;
+                var caret = code.IndexOf("info.ver") + "info.ver".Length;
                 string word = code.WordAt(caret);
 
                 Project project = CSScriptHelper.GenerateProjectFor(script);
@@ -278,6 +303,59 @@ namespace Syntaxer
                 var count = completions.Count(x => x.CompletionText.StartsWith(word));
                 Console.WriteLine("OK - " + count + " completion item(s)...");
                 Console.WriteLine("    '" + completions.Select(x => x.CompletionText).FirstOrDefault(x => x.StartsWith(word)) + "'");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("failed");
+                Console.WriteLine(e);
+            }
+            finally
+            {
+                try { File.Delete(script); } catch { }
+            }
+        }
+
+        static void TestResolving()
+        {
+            Console.Write("Resolve symbol: ");
+            var script = Path.GetTempFileName();
+            try
+            {
+                var currDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                var cscs = Path.Combine(currDir, "cscs.exe");
+                if (File.Exists(cscs))
+                    csscript.cscs_path = cscs;
+                else
+                {
+                    cscs = Path.Combine(Path.GetDirectoryName(currDir), "cscs.exe");
+                    if (File.Exists(cscs))
+                        csscript.cscs_path = cscs;
+                    else
+                        csscript.cscs_path = "./cscs.exe";
+                }
+
+                // // string code = SyntaxProvider.testCode;
+                string code = SyntaxProvider.testCode7b;
+
+                File.WriteAllText(script, code);
+
+                var pattern = "Console.Write";
+                // pattern = "info.ver";
+
+                var caret = code.IndexOf(pattern) + pattern.Length;
+                string word = code.WordAt(caret);
+
+                Project project = CSScriptHelper.GenerateProjectFor(script);
+                var sources = project.Files
+                                     .Where(f => f != script)
+                                     .Select(f => new Tuple<string, string>(File.ReadAllText(f), f))
+                                     .ToArray();
+
+                int methodStartpos;
+                IEnumerable<string> info = Autocompleter.GetMemberInfo(code, caret, out methodStartpos, project.Refs, sources);
+
+                Console.WriteLine("OK - " + info.Count() + " symbol info item(s)...");
+                Console.WriteLine("    '" + info.FirstOrDefault() + "'");
             }
             catch (Exception e)
             {
@@ -809,6 +887,8 @@ class Script
         print(Environment.GetEnvironmentVariables()
                             .Cast<object>()
                             .Take(5));
+
+        Console.WriteLine(777);
     }
 }";
 
