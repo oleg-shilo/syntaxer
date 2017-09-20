@@ -2,22 +2,11 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
-using System.Net.Sockets;
-using System.Reflection;
-using System.Text;
 using Intellisense.Common;
-using RoslynIntellisense;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Xml;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
-using System.Diagnostics;
 
 namespace Syntaxer
 {
-
     class CssSyntax
     {
         static string GetHelpFile()
@@ -30,12 +19,10 @@ namespace Syntaxer
                     .EnsureDir()
                     .DeleteDirFiles("cs-script.*.help.txt");
 
-                try { File.WriteAllText(file, Utils.Run(csscript.cscs_path, "-nl -?")); }
+                try { File.WriteAllText(file, Utils.Run(csscript.cscs_path, "-?")); }
                 catch { }
-
             }
             return file;
-
         }
 
         public static DomRegion Resolve(string directive)
@@ -57,7 +44,7 @@ namespace Syntaxer
 
                 //DomRegion is one based
                 if (matchingLine != -1)
-                    return new DomRegion { FileName = helpFile, BeginLine = matchingLine + 1, BeginColumn = 0 }; 
+                    return new DomRegion { FileName = helpFile, BeginLine = matchingLine + 1, BeginColumn = 0 };
             }
 
             return DomRegion.Empty;
@@ -74,6 +61,12 @@ namespace Syntaxer
 
     public class CssCompletionData : ICompletionData
     {
+        public class SectionInfo
+        {
+            public int docOffset;
+            public string text;
+        }
+
         public CompletionCategory CompletionCategory { get; set; }
         public string CompletionText { get; set; }
         public string Description { get; set; }
@@ -90,6 +83,50 @@ namespace Syntaxer
 
         public void AddOverload(ICompletionData data)
         {
+        }
+
+        static public Dictionary<string, SectionInfo> help_map = new Dictionary<string, SectionInfo>();
+
+        static CssCompletionData()
+        {
+            var help_file = CSScriptHelper.GetCSSHelp();
+            if (File.Exists(help_file))
+            {
+                var text = File.ReadAllText(help_file);
+
+                int prevIndex = -1;
+
+                foreach (Match match in Regex.Matches(text, "(\r+|\n+)//css_"))
+                {
+                    if (prevIndex != -1)
+                    {
+                        // sections are terminated by "-------------------" lines
+                        var section = text.Substring(prevIndex, match.Index - prevIndex).TrimEnd().TrimEnd('-');
+                        var section_lines = Regex.Split(section, "\r\n|\r|\n");
+
+                        var id = section_lines[0].Split(' ').First(); // '//css_include <file>;'
+
+                        var alt_id = section_lines.Where(x => x.StartsWith("Alias - //css"))
+                                                  .Select(x => x.Replace("Alias - ", "").Trim())
+                                                  .FirstOrDefault();
+
+                        help_map[id] = new SectionInfo { docOffset = prevIndex, text = section };
+                        if (alt_id != null)
+                            help_map[alt_id] = help_map[id];
+                    }
+
+                    prevIndex = match.Index + 1; // +1 because of the '/n' or '/n' prefix
+                }
+
+                AllDirectives = help_map.Select(x =>
+                                            new CssCompletionData
+                                            {
+                                                CompletionText = x.Key,
+                                                DisplayText = x.Key,
+                                                Description = x.Value.text
+                                            })
+                                            .ToArray();
+            }
         }
 
         public static ICompletionData[] AllDirectives =
@@ -112,7 +149,7 @@ Example:
             {
                 CompletionText = "//css_ref", DisplayText="//css_ref",
                 Description =
-@"'Reference assembly' directive. Use this directive to reference GAC or local assembly. Can be relative or absolute path. Can also contain environment variables.  
+@"'Reference assembly' directive. Use this directive to reference GAC or local assembly. Can be relative or absolute path. Can also contain environment variables.
 //css_ref <file>;
 //css_reference <file>;
 
@@ -124,7 +161,7 @@ Example:
             {
                 CompletionText = "//css_args", DisplayText="//css_args",
                 Description =
-@"'Set command-line arguments' directive. In some way it's similar shebang but without the loader. 
+@"'Set command-line arguments' directive. In some way it's similar shebang but without the loader.
 //css_args arg0[,arg1]..[,argN];
 
 Example:
@@ -135,7 +172,7 @@ Example:
             {
                 CompletionText = "//css_co", DisplayText="//css_co",
                 Description =
-@"'Set compiler options' directive. Use this directive to pass some compilation specific options directly to the compiler. 
+@"'Set compiler options' directive. Use this directive to pass some compilation specific options directly to the compiler.
 //css_co <options>;
 
 Example:

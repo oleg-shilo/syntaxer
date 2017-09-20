@@ -120,7 +120,7 @@ namespace Syntaxer
                 return method.Invoke(null, new object[] { script });
             }
 
-            static string cscs_GetScriptTempDir()
+            internal static string cscs_GetScriptTempDir()
             {
                 return (string)csscript.Cscs_asm.GetLoadableTypes().Where(t => t.Name == "CSExecutor").First()
                                                    .GetMethod("GetScriptTempDir", BindingFlags.Public | BindingFlags.Static)
@@ -224,6 +224,26 @@ namespace Syntaxer
         static public string GetCSSConfig()
         {
             return csscript.ProjectBuilder.GetCSSConfig();
+        }
+
+        static string help_file;
+
+        static public string GetCSSHelp()
+        {
+            var file = csscript.ProjectBuilder.cscs_GetScriptTempDir().PathJoin("help.txt");
+            if (help_file == null)
+            {
+                try
+                {
+                    var output = Utils.Run(csscript.cscs_path, "-help");
+                    File.WriteAllText(file, output);
+                }
+                catch
+                {
+                    help_file = file;
+                }
+            }
+            return help_file ?? file;
         }
 
         public static CodeMapItem[] GetMapOf(string code, bool stripInjectedClass = false)

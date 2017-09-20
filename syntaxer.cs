@@ -80,10 +80,14 @@ namespace Syntaxer
         {
             if (input.test)
             {
-                TestResolving();
+                // TestResolving();
                 // TestFormat();
                 // TestProject();
                 // TestCompletion();
+
+                TestCSSCompletion();
+                // TestCSSResolving();
+                // TestCSSTooltipResolving();
             }
             else
             {
@@ -227,24 +231,53 @@ namespace Syntaxer
             }
         }
 
-        static void TestProject()
+        static void TestScript(Action<string> action, bool local = false)
         {
-            Console.WriteLine("Generating project: ");
             var script = Path.GetTempFileName();
+
+            if (local)
+            {
+                var localFile = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
+                                    .PathJoin(Path.GetFileName(script));
+
+                File.Move(script, localFile);
+
+                script = localFile;
+            }
+
             try
             {
-                var currDir = Assembly.GetExecutingAssembly().Location.GetDirName();
-                var cscs = currDir.PathJoin("cscs.exe");
+                var currDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                var cscs = Path.Combine(currDir, "cscs.exe");
                 if (File.Exists(cscs))
                     csscript.cscs_path = cscs;
                 else
                 {
-                    cscs = currDir.GetDirName().PathJoin("cscs.exe");
+                    cscs = Path.Combine(Path.GetDirectoryName(currDir), "cscs.exe");
                     if (File.Exists(cscs))
                         csscript.cscs_path = cscs;
                     else
                         csscript.cscs_path = "./cscs.exe";
                 }
+
+                action(script);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("failed");
+                Console.WriteLine(e);
+            }
+            finally
+            {
+                try { File.Delete(script); } catch { }
+            }
+        }
+
+        static void TestProject()
+        {
+            TestScript(script =>
+            {
+                Console.WriteLine("Generating project: ");
 
                 Project project = CSScriptHelper.GenerateProjectFor(script);
                 project.Files.ToList().ForEach(x => Console.WriteLine("    file: " + x));
@@ -252,38 +285,15 @@ namespace Syntaxer
                 project.SearchDirs.ToList().ForEach(x => Console.WriteLine("    searchDir: " + x));
 
                 Console.WriteLine("OK - " + project.Files.Concat(project.Refs).Concat(project.SearchDirs).Count() + " project item(s)");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("failed");
-                Console.WriteLine(e);
-            }
-            finally
-            {
-                try { File.Delete(script); } catch { }
-            }
+            });
         }
 
         static void TestCompletion()
         {
-            Console.Write("Autocompletion: ");
-            var script = Path.GetTempFileName();
-            try
+            TestScript(script =>
             {
-                var currDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                var cscs = Path.Combine(currDir, "cscs.exe");
-                if (File.Exists(cscs))
-                    csscript.cscs_path = cscs;
-                else
-                {
-                    cscs = Path.Combine(Path.GetDirectoryName(currDir), "cscs.exe");
-                    if (File.Exists(cscs))
-                        csscript.cscs_path = cscs;
-                    else
-                        csscript.cscs_path = "./cscs.exe";
-                }
+                Console.Write("Autocompletion: ");
 
-                // // string code = SyntaxProvider.testCode;
                 string code = SyntaxProvider.testCode7b;
 
                 File.WriteAllText(script, code);
@@ -291,50 +301,100 @@ namespace Syntaxer
                 var caret = code.IndexOf("info.ver") + "info.ver".Length;
                 string word = code.WordAt(caret);
 
-                Project project = CSScriptHelper.GenerateProjectFor(script);
-                var sources = project.Files
-                                     .Where(f => f != script)
-                                     .Select(f => new Tuple<string, string>(File.ReadAllText(f), f))
-                                     .ToArray();
+                var completions = SyntaxProvider.GetCompletion(script, caret);
 
-                IEnumerable<ICompletionData> completions = null;
+                Console.WriteLine("OK - " + completions.Count() + " completion item(s)...");
+                Console.WriteLine("    '" + completions.GetLines().FirstOrDefault(x => x.StartsWith(word)) + "'");
+            });
+        }
 
-                completions = Autocompleter.GetAutocompletionFor(code, caret, project.Refs, sources);
-                var count = completions.Count(x => x.CompletionText.StartsWith(word));
-                Console.WriteLine("OK - " + count + " completion item(s)...");
-                Console.WriteLine("    '" + completions.Select(x => x.CompletionText).FirstOrDefault(x => x.StartsWith(word)) + "'");
-            }
-            catch (Exception e)
+        static void TestCSSCompletion()
+        {
+            TestScript(script =>
             {
-                Console.WriteLine("failed");
-                Console.WriteLine(e);
-            }
-            finally
+                Console.Write("CS-Script Autocompletion: ");
+
+                File.WriteAllText(script, "  //css_inc  test.cs");
+
+                var caret = 5;
+                var completions = SyntaxProvider.GetCompletion(script, caret);
+
+                Console.WriteLine("OK");
+
+                caret = 12;
+
+                completions = SyntaxProvider.GetCompletion(script, caret);
+
+                File.WriteAllText(script, "  //css_ref  System.Console.dll");
+                caret = 12;
+
+                completions = SyntaxProvider.GetCompletion(script, caret);
+
+                // Console.WriteLine("    '" + completions.Split('\n').FirstOrDefault(x => x.StartsWith(word)) + "'");
+            }, local: true);
+        }
+
+        // static void TestCSSCompletion2()
+        // {
+        //     TestScript(script =>
+        //     {
+        //         Console.Write("CS-Script 'Include' Autocompletion: ");
+
+        //         string code = "  //css_inc  test.cs";
+        //         File.WriteAllText(script, code);
+
+        //         var caret = 12;
+        //         var completions = SyntaxProvider.GetCompletion(script, caret);
+
+        //         Console.WriteLine("OK");
+
+        //         caret = 12;
+        //         var word = code.WordAt(caret, true);
+        //         var line = code.LineAt(caret);
+
+        //         completions = SyntaxProvider.GetCompletion(script, caret);
+
+        //         // Console.WriteLine("    '" + completions.Split('\n').FirstOrDefault(x => x.StartsWith(word)) + "'");
+        //     });
+        // }
+
+        static void TestCSSResolving()
+        {
+            TestScript(script =>
             {
-                try { File.Delete(script); } catch { }
-            }
+                Console.Write("Resolve CS-Script symbol: ");
+                string code = "  //css_ref test.dll;";
+
+                File.WriteAllText(script, code);
+
+                var caret = 5;
+                var info = SyntaxProvider.Resolve(script, caret);
+
+                Console.WriteLine("OK");
+            });
+        }
+
+        static void TestCSSTooltipResolving()
+        {
+            TestScript(script =>
+            {
+                Console.Write("Resolve CS-Script symbol to tooltip: ");
+                string code = "  //css_ref test.dll;";
+
+                File.WriteAllText(script, code);
+
+                var caret = 5;
+                string info = SyntaxProvider.GetMemberInfo(script, caret, null, true);
+
+                Console.WriteLine("OK");
+            });
         }
 
         static void TestResolving()
         {
-            Console.Write("Resolve symbol: ");
-            var script = Path.GetTempFileName();
-            try
+            TestScript(script =>
             {
-                var currDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                var cscs = Path.Combine(currDir, "cscs.exe");
-                if (File.Exists(cscs))
-                    csscript.cscs_path = cscs;
-                else
-                {
-                    cscs = Path.Combine(Path.GetDirectoryName(currDir), "cscs.exe");
-                    if (File.Exists(cscs))
-                        csscript.cscs_path = cscs;
-                    else
-                        csscript.cscs_path = "./cscs.exe";
-                }
-
-                // // string code = SyntaxProvider.testCode;
+                Console.Write("Resolve symbol: ");
                 string code = SyntaxProvider.testCode7b;
 
                 File.WriteAllText(script, code);
@@ -345,27 +405,11 @@ namespace Syntaxer
                 var caret = code.IndexOf(pattern) + pattern.Length;
                 string word = code.WordAt(caret);
 
-                Project project = CSScriptHelper.GenerateProjectFor(script);
-                var sources = project.Files
-                                     .Where(f => f != script)
-                                     .Select(f => new Tuple<string, string>(File.ReadAllText(f), f))
-                                     .ToArray();
-
-                int methodStartpos;
-                IEnumerable<string> info = Autocompleter.GetMemberInfo(code, caret, out methodStartpos, project.Refs, sources);
+                string info = SyntaxProvider.GetMemberInfo(script, caret, null, true);
 
                 Console.WriteLine("OK - " + info.Count() + " symbol info item(s)...");
-                Console.WriteLine("    '" + info.FirstOrDefault() + "'");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("failed");
-                Console.WriteLine(e);
-            }
-            finally
-            {
-                try { File.Delete(script); } catch { }
-            }
+                Console.WriteLine("    '" + info.GetLines().FirstOrDefault() + "'");
+            });
         }
 
         static Assembly Probe(string dir, string asmName)
@@ -546,21 +590,22 @@ namespace Syntaxer
             }
         }
 
-        static string Resolve(string script, int offset)
+        internal static string Resolve(string script, int offset)
         {
+            Console.WriteLine("Resolve");
             string code = File.ReadAllText(script);
 
             if (code.IsEmpty())
                 throw new Exception("The file containing code is empty");
 
             var result = new StringBuilder();
-
-            string token = code.WordAt(offset);
-
             DomRegion region;
-            if (token.StartsWith("//css_"))
+
+            string word = code.WordAt(offset, true);
+            string line = code.LineAt(offset);
+            if (word.StartsWith("//css_") || line.TrimStart().StartsWith("//css_"))
             {
-                region = CssSyntax.Resolve(token);
+                region = CssSyntax.Resolve(word);
             }
             else
             {
@@ -693,7 +738,7 @@ namespace Syntaxer
             return result.ToString().Trim();
         }
 
-        static string GetCompletion(string script, int caret)
+        public static string GetCompletion(string script, int caret)
         {
             Console.WriteLine("GetCompletion");
             string code = File.ReadAllText(script);
@@ -704,10 +749,38 @@ namespace Syntaxer
             IEnumerable<ICompletionData> completions = null;
             var result = new StringBuilder();
 
-            string word = code.WordAt(caret);
-            if (word.StartsWith("//css"))
+            string word = code.WordAt(caret, true);
+            string line = code.LineAt(caret);
+            if (word.StartsWith("//css_") || line.TrimStart().StartsWith("//css_"))
             {
                 completions = CssCompletionData.AllDirectives;
+                if (word == "")
+                {
+                    var directive = line.TrimStart().WordAt(2, true);
+                    string extensions = directive.FirstMatch(("//css_inc", ".cs"),
+                                                             ("//css_include", ".cs"),
+                                                             ("//css_ref", ".dll|.exe"),
+                                                             ("//css_reference", ".dll|.exe"));
+
+                    if (extensions != null)
+                    {
+                        completions = CSScriptHelper.GenerateProjectFor(script)
+                                                    .SearchDirs
+                                                    .SelectMany(dir => extensions.Split('|').Select(x => new { ProbingDir = dir, FileExtension = x }))
+                                                    .SelectMany(x =>
+                                                    {
+                                                        var files = Directory.GetFiles(x.ProbingDir, "*" + x.FileExtension);
+
+                                                        return files.Select(file => new CssCompletionData
+                                                        {
+                                                            CompletionText = Path.GetFileName(file),
+                                                            DisplayText = Path.GetFileName(file),
+                                                            Description = "File: " + file,
+                                                            CompletionType = CompletionType.file
+                                                        });
+                                                    });
+                    }
+                }
             }
             else
             {
@@ -758,7 +831,7 @@ namespace Syntaxer
             return result.ToString().Trim();
         }
 
-        static string GetMemberInfo(string script, int caret, string hint, bool shortHintedTooltips)
+        internal static string GetMemberInfo(string script, int caret, string hint, bool shortHintedTooltips)
         {
             Console.WriteLine("GetMemberInfo");
             //Console.WriteLine("hint: " + hint);
@@ -768,13 +841,10 @@ namespace Syntaxer
             if (code.IsEmpty())
                 throw new Exception("The file containing code is empty");
 
-            string word = code.WordAt(caret);
+            string word = code.WordAt(caret, true);
             string line = code.LineAt(caret);
-            if (word.StartsWith("//css_") || line.StartsWith("//css_"))
+            if (word.StartsWith("//css_") || line.TrimStart().StartsWith("//css_"))
             {
-                if (!word.StartsWith("//css_"))
-                    word = line.WordAt(1);
-
                 var css_directive = CssCompletionData.AllDirectives.FirstOrDefault(x => x.DisplayText == word);
                 if (css_directive != null)
                 {

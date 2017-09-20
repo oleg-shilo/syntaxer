@@ -17,6 +17,28 @@ namespace Syntaxer
             return text.Replace("\r\n", "\n");
         }
 
+#if !cli_interface
+        public static IEnumerable<T> Match<T>(this T source, params (T pattern, T value)[] mappers)
+        {
+            var matches = new List<T>();
+            foreach (var mapper in mappers)
+                if (source.Equals(mapper.pattern))
+                    matches.Add(mapper.value);
+
+            return matches;
+        }
+
+        public static T FirstMatch<T>(this T source, params (T pattern, T value)[] mappers)
+        {
+            var matches = new List<T>();
+            foreach (var mapper in mappers)
+                if (source.Equals(mapper.pattern))
+                    return mapper.value;
+
+            return default(T);
+        }
+#endif
+
         public static void PreserveCurrentDir(Action action)
         {
             string currDir = Environment.CurrentDirectory;
@@ -64,11 +86,13 @@ namespace Syntaxer
         }
 
         static char[] delimiters = "\\\t\n\r .,:;'\"=[]{}()+-/!?@$%^&*«»><#|~`".ToCharArray();
+        static char[] delimiters_css = "\\\t\n\r .,:;'\"=[]{}()+-!?@$%^&*«»><#|~`".ToCharArray(); //removed '/' which is not a cs-script delimiter (e.g. "//css_ref")
 
-        public static string WordAt(this string text, int index)
+        public static string WordAt(this string text, int index, bool is_css = false)
         {
-            int start = text.Substring(0, index).LastIndexOfAny(delimiters) + 1;
-            int end = text.Substring(index).IndexOfAny(delimiters);
+            var delims = is_css ? delimiters_css : delimiters;
+            int start = text.Substring(0, index).LastIndexOfAny(delims) + 1;
+            int end = text.Substring(index).IndexOfAny(delims);
 
             if (end != -1)
                 end = (index + end);
@@ -86,11 +110,11 @@ namespace Syntaxer
             int end = text.Substring(index).IndexOfAny(delimiters);
 
             if (end != -1)
-                end = text.Length;
-            else
                 end = (index + end);
+            else
+                end = text.Length;
 
-            return text.Substring(start, end - start).Trim();
+            return text.Substring(start, end - start);
         }
 
         public static string DeleteDirFiles(this string dir, string pattern)
