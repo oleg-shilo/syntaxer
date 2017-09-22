@@ -9,6 +9,22 @@ using System.Text;
 
 namespace Syntaxer
 {
+    // There is NodeLabelEditEventArgs warranty that `Console.WriteLine` is always a safe call.
+    // Particularly because the code is to be run on various OS and runtimes.
+    // Thus accessing Console.Encoding on Windows from WinForm app raises the exception
+    static class Output
+    {
+        public static void WriteLine(object value)
+        {
+            try { Console.WriteLine(value); } catch { }
+        }
+
+        public static void Write(object value)
+        {
+            try { Console.Write(value); } catch { }
+        }
+    }
+
     public static class Utils
     {
         public static string NormalizeLineEnding(this string text)
