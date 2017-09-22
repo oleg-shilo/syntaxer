@@ -87,8 +87,9 @@ namespace Syntaxer
 
                 // Test.CSSCompletion();
                 // Test.CSSResolving();
-                Test.CSSResolving2();
+                // Test.CSSResolving2();
                 // Test.CSSTooltipResolving();
+                Test.All();
             }
             else
             {

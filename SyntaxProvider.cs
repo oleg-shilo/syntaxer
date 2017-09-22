@@ -176,9 +176,9 @@ namespace Syntaxer
             if (code.IsEmpty())
                 throw new Exception("The file containing code is empty");
 
-            var region = DomRegion.Empty;
+            DomRegion region = DomRegion.Empty;
 
-            bool wasProcessed = ParseAsCssDirective(script, code, offset,
+            ParseAsCssDirective(script, code, offset,
                 directive =>
                 {
                     region = CssSyntax.Resolve(directive);
@@ -194,9 +194,11 @@ namespace Syntaxer
                             FileName = file,
                             IsEmpty = false
                         };
+                    else
+                        region = CssSyntax.Resolve(directive);
                 });
 
-            if (!wasProcessed)
+            if (region.IsEmpty)
             {
                 bool decorated = false;
                 if (!script.EndsWith(".g.cs"))
@@ -434,16 +436,30 @@ namespace Syntaxer
             if (code.IsEmpty())
                 throw new Exception("The file containing code is empty");
 
-            string word = code.WordAt(caret, true);
-            string line = code.LineAt(caret);
-            if (word.StartsWith("//css_") || line.TrimStart().StartsWith("//css_"))
+            void loockupDirective(string directive)
             {
-                var css_directive = CssCompletionData.AllDirectives.FirstOrDefault(x => x.DisplayText == word);
+                var css_directive = CssCompletionData.AllDirectives
+                                                        .FirstOrDefault(x => x.DisplayText == directive);
                 if (css_directive != null)
                 {
                     result = $"Directive: {css_directive.DisplayText}\n{css_directive.Description}";
-                    return result.NormalizeLineEnding().Replace("\r\n\r\n", "\r\n").TrimEnd();
+                    result = result.NormalizeLineEnding().Replace("\r\n\r\n", "\r\n").TrimEnd();
                 }
+            };
+
+            ParseAsCssDirective(script, code, caret,
+               loockupDirective,
+               (directive, arg) =>
+               {
+                   if (LookopDirectivePath(script, caret, directive, arg) is string file)
+                       result = $"File: {file}";
+                   else
+                       loockupDirective(directive);
+               });
+
+            if (result.HasText())
+            {
+                return result;
             }
 
             if (!script.EndsWith(".g.cs"))

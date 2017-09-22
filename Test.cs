@@ -20,6 +20,19 @@ namespace Syntaxer
 {
     public class Test
     {
+        public static void All()
+        {
+            // Test.Resolving();
+            // Test.Format();
+            // Test.Project();
+            // Test.Completion();
+
+            // Test.CSSCompletion();
+            // Test.CSSResolving();
+            Test.CSSResolving2();
+            // Test.CSSTooltipResolving();
+        }
+
         public static void Format()
         {
             Output.Write("Formatting: ");
@@ -219,7 +232,7 @@ namespace Syntaxer
                 // var caret = 5;
 
                 string info = Services.GetTooltip(script, caret, null, true);
-
+                Output.WriteLine(info);
                 Output.WriteLine("OK");
             });
         }
