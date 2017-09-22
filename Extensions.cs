@@ -18,6 +18,7 @@ namespace Syntaxer
         }
 
 #if !cli_interface
+
         public static IEnumerable<T> Match<T>(this T source, params (T pattern, T value)[] mappers)
         {
             var matches = new List<T>();
@@ -37,6 +38,7 @@ namespace Syntaxer
 
             return default(T);
         }
+
 #endif
 
         public static void PreserveCurrentDir(Action action)
@@ -51,6 +53,11 @@ namespace Syntaxer
                 Environment.CurrentDirectory = currDir;
             }
         }
+
+        public static bool IsWinows = Environment.OSVersion.Platform == PlatformID.Win32NT
+                                   || Environment.OSVersion.Platform == PlatformID.Win32S
+                                   || Environment.OSVersion.Platform == PlatformID.Win32Windows
+                                   || Environment.OSVersion.Platform == PlatformID.WinCE;
 
         public static bool IsProcessRunning(int id)
         {

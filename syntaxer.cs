@@ -36,6 +36,22 @@ using Microsoft.CodeAnalysis.MSBuild;
 
 namespace Syntaxer
 {
+    // There is NodeLabelEditEventArgs warranty that `Console.WriteLine` is always a safe call.
+    // Particularly because the code is to be run on various OS and runtimes.
+    // Thus accessing Console.Encoding on Windows from WinForm app raises the exception
+    static class Output
+    {
+        public static void WriteLine(object value)
+        {
+            try { Console.WriteLine(value); } catch { }
+        }
+
+        public static void Write(object value)
+        {
+            try { Console.Write(value); } catch { }
+        }
+    }
+
     class Server
     {
         static void Main(string[] args)
@@ -58,7 +74,7 @@ namespace Syntaxer
                 LoadRoslyn();
             }
             mono_root = Path.GetDirectoryName(typeof(string).Assembly.Location);
-            Console.WriteLine(mono_root);
+            Output.WriteLine(mono_root);
             AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
 
             Run(input);
@@ -85,8 +101,9 @@ namespace Syntaxer
                 // TestProject();
                 // TestCompletion();
 
-                TestCSSCompletion();
+                // TestCSSCompletion();
                 // TestCSSResolving();
+                TestCSSResolving2();
                 // TestCSSTooltipResolving();
             }
             else
@@ -97,7 +114,7 @@ namespace Syntaxer
                 if (input.listen)
                     SocketServer.Listen(input);
                 else
-                    Console.WriteLine(SyntaxProvider.ProcessRequest(input));
+                    Output.WriteLine(SyntaxProvider.ProcessRequest(input));
             }
         }
 
@@ -216,18 +233,21 @@ namespace Syntaxer
         static void TestFormat()
         {
             Console.Write("Formatting: ");
+
+            // $safeprojectname$
+
             try
             {
                 // var dummyWorkspace = MSBuildWorkspace.Create();
                 // SyntaxTree tree = CSharpSyntaxTree.ParseText(SyntaxProvider.testCode.Trim());
                 // SyntaxNode root = Microsoft.CodeAnalysis.Formatting.Formatter.Format(tree.GetRoot(), dummyWorkspace);
                 RoslynIntellisense.Formatter.FormatHybrid(SyntaxProvider.testCode, "code.cs");
-                Console.WriteLine("OK");
+                Output.WriteLine("OK");
             }
             catch (Exception e)
             {
-                Console.WriteLine("failed");
-                Console.WriteLine(e);
+                Output.WriteLine("failed");
+                Output.WriteLine(e);
             }
         }
 
@@ -264,8 +284,8 @@ namespace Syntaxer
             }
             catch (Exception e)
             {
-                Console.WriteLine("failed");
-                Console.WriteLine(e);
+                Output.WriteLine("failed");
+                Output.WriteLine(e);
             }
             finally
             {
@@ -277,14 +297,14 @@ namespace Syntaxer
         {
             TestScript(script =>
             {
-                Console.WriteLine("Generating project: ");
+                Output.WriteLine("Generating project: ");
 
                 Project project = CSScriptHelper.GenerateProjectFor(script);
-                project.Files.ToList().ForEach(x => Console.WriteLine("    file: " + x));
-                project.Refs.ToList().ForEach(x => Console.WriteLine("    ref: " + x));
-                project.SearchDirs.ToList().ForEach(x => Console.WriteLine("    searchDir: " + x));
+                project.Files.ToList().ForEach(x => Output.WriteLine("    file: " + x));
+                project.Refs.ToList().ForEach(x => Output.WriteLine("    ref: " + x));
+                project.SearchDirs.ToList().ForEach(x => Output.WriteLine("    searchDir: " + x));
 
-                Console.WriteLine("OK - " + project.Files.Concat(project.Refs).Concat(project.SearchDirs).Count() + " project item(s)");
+                Output.WriteLine("OK - " + project.Files.Concat(project.Refs).Concat(project.SearchDirs).Count() + " project item(s)");
             });
         }
 
@@ -301,10 +321,10 @@ namespace Syntaxer
                 var caret = code.IndexOf("info.ver") + "info.ver".Length;
                 string word = code.WordAt(caret);
 
-                var completions = SyntaxProvider.GetCompletion(script, caret);
+                var completions = Services.GetCompletion(script, caret);
 
-                Console.WriteLine("OK - " + completions.Count() + " completion item(s)...");
-                Console.WriteLine("    '" + completions.GetLines().FirstOrDefault(x => x.StartsWith(word)) + "'");
+                Output.WriteLine("OK - " + completions.Count() + " completion item(s)...");
+                Output.WriteLine("    '" + completions.GetLines().FirstOrDefault(x => x.StartsWith(word)) + "'");
             });
         }
 
@@ -319,14 +339,18 @@ namespace Syntaxer
                 var caret = 5;
                 var completions = SyntaxProvider.GetCompletion(script, caret);
 
-                Console.WriteLine("OK");
+                Output.WriteLine("OK");
 
                 caret = 12;
 
                 completions = SyntaxProvider.GetCompletion(script, caret);
 
-                File.WriteAllText(script, "  //css_ref  System.Console.dll");
+                File.WriteAllText(script, "  //css_inc  cmd.cs");
                 caret = 12;
+
+                completions = SyntaxProvider.GetCompletion(script, caret);
+
+                caret = 15;
 
                 completions = SyntaxProvider.GetCompletion(script, caret);
 
@@ -362,15 +386,32 @@ namespace Syntaxer
         {
             TestScript(script =>
             {
-                Console.Write("Resolve CS-Script symbol: ");
+                Output.Write("Resolve CS-Script symbol: ");
                 string code = "  //css_ref test.dll;";
 
                 File.WriteAllText(script, code);
 
                 var caret = 5;
-                var info = SyntaxProvider.Resolve(script, caret);
+                var info = Services.Resolve(script, caret);
 
-                Console.WriteLine("OK");
+                Output.WriteLine("OK");
+            });
+        }
+
+        static void TestCSSResolving2()
+        {
+            TestScript(script =>
+            {
+                Output.Write("Resolve CS-Script symbol: ");
+                string code = "//css_inc cmd.cs;";
+                // string code = "//css_ref cmd.dll;";
+
+                File.WriteAllText(script, code);
+
+                var caret = 13;
+                var info = Services.Resolve(script, caret);
+                Output.WriteLine(info);
+                Output.WriteLine("OK");
             });
         }
 
@@ -378,15 +419,18 @@ namespace Syntaxer
         {
             TestScript(script =>
             {
-                Console.Write("Resolve CS-Script symbol to tooltip: ");
-                string code = "  //css_ref test.dll;";
+                Output.Write("Resolve CS-Script symbol to tooltip: ");
+                // string code = "  //css_ref test.dll;";
+                string code = "  //css_inc cmd.cs;";
 
                 File.WriteAllText(script, code);
 
-                var caret = 5;
-                string info = SyntaxProvider.GetMemberInfo(script, caret, null, true);
+                var caret = 13;
+                // var caret = 5;
 
-                Console.WriteLine("OK");
+                string info = Services.GetTooltip(script, caret, null, true);
+
+                Output.WriteLine("OK");
             });
         }
 
@@ -394,7 +438,7 @@ namespace Syntaxer
         {
             TestScript(script =>
             {
-                Console.Write("Resolve symbol: ");
+                Output.Write("Resolve symbol: ");
                 string code = SyntaxProvider.testCode7b;
 
                 File.WriteAllText(script, code);
@@ -405,10 +449,12 @@ namespace Syntaxer
                 var caret = code.IndexOf(pattern) + pattern.Length;
                 string word = code.WordAt(caret);
 
-                string info = SyntaxProvider.GetMemberInfo(script, caret, null, true);
+                var region = Services.Resolve(script, caret);
 
-                Console.WriteLine("OK - " + info.Count() + " symbol info item(s)...");
-                Console.WriteLine("    '" + info.GetLines().FirstOrDefault() + "'");
+                string info = "";
+
+                Output.WriteLine("OK - " + info.Count() + " symbol info item(s)...");
+                Output.WriteLine("    '" + info.GetLines().FirstOrDefault() + "'");
             });
         }
 
@@ -452,26 +498,26 @@ namespace Syntaxer
                 if (processArgs.client != 0)
                 {
                     connections[processArgs.client] = true;
-                    Console.WriteLine("Monitor client: " + processArgs.client);
+                    Output.WriteLine("Monitor client: " + processArgs.client);
                 }
 
                 Task.Run(() => MonitorConnections(processArgs.timeout, requestShutdown: serverSocket.Stop));
 
-                Console.WriteLine($" >> Server Started (port={processArgs.port})");
+                Output.WriteLine($" >> Server Started (port={processArgs.port})");
                 new Engine().Preload();
-                Console.WriteLine($" >> Syntax engine loaded");
+                Output.WriteLine($" >> Syntax engine loaded");
 
                 while (true)
                 {
-                    Console.WriteLine(" >> Waiting for client request...");
+                    Output.WriteLine(" >> Waiting for client request...");
                     TcpClient clientSocket = serverSocket.AcceptTcpClient();
-                    Console.WriteLine(" >> Accepted client...");
+                    Output.WriteLine(" >> Accepted client...");
 
                     lock (connections)
                     {
                         try
                         {
-                            Console.WriteLine(" >> Reading request...");
+                            Output.WriteLine(" >> Reading request...");
                             string request = clientSocket.ReadAllText();
 
                             var args = new Args(request.GetLines());
@@ -487,7 +533,7 @@ namespace Syntaxer
                                     connections[args.client] = true;
                             }
 
-                            Console.WriteLine(" >> Processing client request");
+                            Output.WriteLine(" >> Processing client request");
 
                             string response = SyntaxProvider.ProcessRequest(args);
                             if (response != null)
@@ -495,24 +541,24 @@ namespace Syntaxer
                         }
                         catch (Exception e)
                         {
-                            Console.WriteLine(e.Message);
+                            Output.WriteLine(e.Message);
                         }
                     }
                 }
 
                 serverSocket.Stop();
-                Console.WriteLine(" >> exit");
+                Output.WriteLine(" >> exit");
             }
             catch (SocketException e)
             {
                 if (e.ErrorCode == 10048)
-                    Console.WriteLine(">" + e.Message);
+                    Output.WriteLine(">" + e.Message);
                 else
-                    Console.WriteLine(e.Message);
+                    Output.WriteLine(e.Message);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Output.WriteLine(e);
             }
         }
     }
@@ -547,7 +593,7 @@ namespace Syntaxer
                     if (csscript.cscs_path != args.cscs_path)
                     {
                         csscript.cscs_path = args.cscs_path;
-                        Console.WriteLine(" >> cscs.exe is remapped to: " + csscript.cscs_path);
+                        Output.WriteLine(" >> cscs.exe is remapped to: " + csscript.cscs_path);
                     }
                     return null;
                 }
@@ -573,10 +619,10 @@ namespace Syntaxer
                     result = CodeMap(args.script);
                 else if (args.op == "format")
                 {
-                    Console.WriteLine("FormatCode>");
+                    Output.WriteLine("FormatCode>");
                     int caretPos = args.pos;
                     var formattedCode = FormatCode(args.script, ref caretPos);
-                    Console.WriteLine("<FormatCode");
+                    Output.WriteLine("<FormatCode");
                     result = $"{caretPos}\n{formattedCode}";
                 }
                 if (string.IsNullOrEmpty(result))
@@ -592,20 +638,160 @@ namespace Syntaxer
 
         internal static string Resolve(string script, int offset)
         {
-            Console.WriteLine("Resolve");
+            Output.WriteLine("Resolve");
+
+            DomRegion region = ResolveRaw(script, offset);
+
+            var result = new StringBuilder();
+            result.AppendLine("file:" + region.FileName);
+            result.AppendLine("line:" + region.BeginLine);
+
+            return result.ToString().Trim();
+        }
+
+        static string GetAssociatedFileExtensions(string directive)
+        {
+            return directive.FirstMatch(("//css_inc", ".cs"),
+                                        ("//css_include", ".cs"),
+                                        ("//css_ref", ".dll|.exe"),
+                                        ("//css_reference", ".dll|.exe"));
+        }
+
+        internal static bool ParseAsCssDirective(string script, string code, int offset, Action<string> onDirective, Action<string, string> onDirectiveArg)
+        {
+            string word = code.WordAt(offset, true);
+            string line = code.LineAt(offset);
+            if (word.StartsWith("//css_") || line.TrimStart().StartsWith("//css_"))
+            {
+                var directive = line.TrimStart().WordAt(2, true);
+                string extensions = GetAssociatedFileExtensions(directive);
+
+                if (word == "")
+                {
+                    onDirective(directive);
+                }
+                else if (word.StartsWith("//css_"))
+                {
+                    onDirective(directive);
+                }
+                else
+                {
+                    if (extensions == null) // directive that does not include file
+                        onDirective(directive);
+                    else
+                        onDirectiveArg(directive, word);
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        internal static string LookopDirectivePath(string script, int offset, string directive, string word, string extensions = null)
+        {
+            extensions = extensions ?? GetAssociatedFileExtensions(directive);
+
+            if (extensions != null && word.HasText()) // file of the //css_inc or //css_ref directive
+            {
+                bool ignoreCase = Utils.IsWinows;
+
+                var probing_dirs = CSScriptHelper.GenerateProjectFor(script)
+                                                 .SearchDirs;
+
+                var match = probing_dirs.Select(dir => Directory.GetFiles(dir, "*")
+                                                                .FirstOrDefault(file =>
+                                                                {
+                                                                    return Path.GetFileName(file).IsSameAs(word, ignoreCase)
+                                                                                   ||
+                                                                                  (Path.GetFileNameWithoutExtension(file).IsSameAs(word, ignoreCase) &&
+                                                                                   extensions.Contains(Path.GetExtension(file)));
+                                                                }))
+                                        .FirstOrDefault(x => x != null);
+
+                return match;
+            }
+            return null;
+        }
+
+        internal static DomRegion ResolveRaw(string script, int offset)
+        {
             string code = File.ReadAllText(script);
 
             if (code.IsEmpty())
                 throw new Exception("The file containing code is empty");
 
-            var result = new StringBuilder();
-            DomRegion region;
+            var region = DomRegion.Empty;
+
+            bool wasProcessed = ParseAsCssDirective(script, code, offset,
+                directive =>
+                {
+                    region = CssSyntax.Resolve(directive);
+                },
+                (directive, arg) =>
+                {
+                    if (LookopDirectivePath(script, offset, directive, arg) is string file)
+                        region = new DomRegion
+                        {
+                            BeginColumn = -1,
+                            BeginLine = -1,
+                            EndLine = -1,
+                            FileName = file,
+                            IsEmpty = false
+                        };
+                });
+
+            if (!wasProcessed)
+            {
+                bool decorated = false;
+                if (!script.EndsWith(".g.cs"))
+                    decorated = CSScriptHelper.DecorateIfRequired(ref code, ref offset);
+
+                Project project = CSScriptHelper.GenerateProjectFor(script);
+                var sources = project.Files
+                                     .Where(f => f != script)
+                                     .Select(f => new Tuple<string, string>(File.ReadAllText(f), f))
+                                     .ToArray();
+
+                region = Autocompleter.ResolveSymbol(code, offset, script, project.Refs, sources);
+                if (decorated && region.FileName == script)
+                    CSScriptHelper.Undecorate(code, ref region);
+            }
+
+            return region;
+        }
+
+        internal static DomRegion ResolveRawOld(string script, int offset)
+        {
+            string code = File.ReadAllText(script);
+
+            if (code.IsEmpty())
+                throw new Exception("The file containing code is empty");
+
+            var region = DomRegion.Empty;
 
             string word = code.WordAt(offset, true);
             string line = code.LineAt(offset);
             if (word.StartsWith("//css_") || line.TrimStart().StartsWith("//css_"))
             {
-                region = CssSyntax.Resolve(word);
+                var directive = line.TrimStart().WordAt(2, true);
+                string extensions = GetAssociatedFileExtensions(directive);
+
+                if (word == "")
+                {
+                    region = CssSyntax.Resolve(directive);
+                }
+                else if (word.StartsWith("//css_"))
+                {
+                    region = CssSyntax.Resolve(word);
+                }
+                else
+                {
+                    if (extensions == null) // directive that does not include file
+                        region = CssSyntax.Resolve(directive);
+                    else
+                        region = LookopDirectivePathOld(script, offset, directive, word, extensions);
+                }
             }
             else
             {
@@ -623,10 +809,8 @@ namespace Syntaxer
                 if (decorated && region.FileName == script)
                     CSScriptHelper.Undecorate(code, ref region);
             }
-            result.AppendLine("file:" + region.FileName);
-            result.AppendLine("line:" + region.BeginLine);
 
-            return result.ToString().Trim();
+            return region;
         }
 
         static void PKill(int pid, string childNameHint = null)
@@ -644,9 +828,9 @@ namespace Syntaxer
             catch { }
         }
 
-        static string FindRefreneces(string script, int offset)
+        internal static string FindRefreneces(string script, int offset)
         {
-            Console.WriteLine("FindRefreneces");
+            Output.WriteLine("FindRefreneces");
 
             string code = File.ReadAllText(script);
             if (code.IsEmpty())
@@ -666,9 +850,9 @@ namespace Syntaxer
             return regions.JoinBy("\n");
         }
 
-        static string FindUsings(string script, string word)
+        internal static string FindUsings(string script, string word)
         {
-            Console.WriteLine("FindUsings");
+            Output.WriteLine("FindUsings");
             string code = File.ReadAllText(script);
             if (code.IsEmpty())
                 throw new Exception("The file containing code is empty");
@@ -683,9 +867,9 @@ namespace Syntaxer
             return regions.Select(x => x.Namespace).JoinBy("\n");
         }
 
-        static string FormatCode(string script, ref int caret)
+        internal static string FormatCode(string script, ref int caret)
         {
-            Console.WriteLine("FormatCode-------------------------------------------");
+            Output.WriteLine("FormatCode-------------------------------------------");
             //formattedCode = formattedCode.NormalizeLineEnding();
             string code = File.ReadAllText(script);
             if (code.IsEmpty())
@@ -698,7 +882,7 @@ namespace Syntaxer
             return formattedCode;
         }
 
-        static string CodeMap(string script)
+        internal static string CodeMap(string script)
         {
             csscript.Log("CodeMap");
             string code = File.ReadAllText(script);
@@ -738,16 +922,54 @@ namespace Syntaxer
             return result.ToString().Trim();
         }
 
-        public static string GetCompletion(string script, int caret)
+        internal static string GetCompletion(string script, int caret)
         {
-            Console.WriteLine("GetCompletion");
+            Output.WriteLine("GetCompletion");
+
+            var result = new StringBuilder();
+
+            foreach (ICompletionData item in GetCompletionRaw(script, caret))
+            {
+                string type = item.CompletionType.ToString().Replace("_event", "event").Replace("_namespace", "namespace");
+                string completion = item.CompletionText;
+                string display = item.DisplayText;
+                if (item.CompletionType == CompletionType.method)
+                {
+                    if (item.HasOverloads)
+                    {
+                        display += "(...)";
+                        //completion += "(";
+                    }
+                    else
+                    {
+                        if (item.InvokeParameters.Count() == 0)
+                        {
+                            display += "()";
+                            completion += "()";
+                        }
+                        else
+                        {
+                            display += "(..)";
+                            //completion += "(";
+                        }
+                    }
+                }
+
+                result.AppendLine($"{display}\t{type}|{completion}");
+            }
+
+            //Console.WriteLine(">>>>>" + result.ToString().Trim());
+            return result.ToString().Trim();
+        }
+
+        internal static IEnumerable<ICompletionData> GetCompletionRaw(string script, int caret)
+        {
             string code = File.ReadAllText(script);
 
             if (code.IsEmpty())
                 throw new Exception("The file containing code is empty");
 
             IEnumerable<ICompletionData> completions = null;
-            var result = new StringBuilder();
 
             string word = code.WordAt(caret, true);
             string line = code.LineAt(caret);
@@ -796,44 +1018,12 @@ namespace Syntaxer
                 completions = Autocompleter.GetAutocompletionFor(code, caret, project.Refs, sources);
                 var count = completions.Count();
             }
-
-            foreach (ICompletionData item in completions)
-            {
-                string type = item.CompletionType.ToString().Replace("_event", "event").Replace("_namespace", "namespace");
-                string completion = item.CompletionText;
-                string display = item.DisplayText;
-                if (item.CompletionType == CompletionType.method)
-                {
-                    if (item.HasOverloads)
-                    {
-                        display += "(...)";
-                        //completion += "(";
-                    }
-                    else
-                    {
-                        if (item.InvokeParameters.Count() == 0)
-                        {
-                            display += "()";
-                            completion += "()";
-                        }
-                        else
-                        {
-                            display += "(..)";
-                            //completion += "(";
-                        }
-                    }
-                }
-
-                result.AppendLine($"{display}\t{type}|{completion}");
-            }
-
-            //Console.WriteLine(">>>>>" + result.ToString().Trim());
-            return result.ToString().Trim();
+            return completions;
         }
 
         internal static string GetMemberInfo(string script, int caret, string hint, bool shortHintedTooltips)
         {
-            Console.WriteLine("GetMemberInfo");
+            Output.WriteLine("GetMemberInfo");
             //Console.WriteLine("hint: " + hint);
 
             string result = null;
@@ -901,7 +1091,7 @@ namespace Syntaxer
             return result;
         }
 
-        static public string GenerateProjectFor(string script)
+        static string GenerateProjectFor(string script)
         {
             //MessageBox.Show(typeof(Project).Assembly.Location, typeof(Project).Assembly.GetName().ToString());
 
@@ -987,5 +1177,42 @@ class Script
         }
     }
 }";
+    }
+
+    public static class Services
+    {
+        // "references" - request
+        public static string FindRefreneces(string script, int offset) => SyntaxProvider.FindRefreneces(script, offset);
+
+        // "suggest_usings" - request
+        public static string FindUsings(string script, string word) => SyntaxProvider.FindUsings(script, word);
+
+        // "resolve" - request
+        public static string Resolve(string script, int offset)
+            => SyntaxProvider.Resolve(script, offset);
+
+        // public static DomRegion Resolve(string script, int offset) => SyntaxProvider.ResolveRaw(script, offset);
+
+        // "completion" - request
+        public static string GetCompletion(string script, int offset)
+            => SyntaxProvider.GetCompletion(script, offset);
+
+        // public static IEnumerable<ICompletionData> GetCompletion(string script, int offset) => SyntaxProvider.GetCompletionRaw(script, offset);
+
+        // "tooltip" - request
+        public static string GetTooltip(string script, int offset, string hint, bool shortHintedTooltips)
+            => SyntaxProvider.GetMemberInfo(script, offset, hint, shortHintedTooltips);
+
+        // "project" - request
+        public static Project GenerateProjectFor(string script)
+            => CSScriptHelper.GenerateProjectFor(script);
+
+        // "codemap" - request
+        public static string GetCodeMap(string script)
+            => SyntaxProvider.CodeMap(script);
+
+        // "format" - request
+        public static string FormatCode(string script, ref int caretPos)
+            => SyntaxProvider.FormatCode(script, ref caretPos);
     }
 }

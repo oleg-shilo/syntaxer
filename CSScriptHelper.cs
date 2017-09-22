@@ -45,7 +45,7 @@ namespace Syntaxer
             //    message = File.ReadAllText(file) + "\n" + message;
 
             //File.WriteAllText(file, message);
-            Console.WriteLine(message);
+            Output.WriteLine(message);
         }
 
         internal static Assembly _cscs_asm;
