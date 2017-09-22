@@ -132,9 +132,14 @@ namespace Syntaxer
                 else
                 {
                     if (extensions == null) // directive that does not include file
+                    {
                         onDirective(directive);
+                    }
                     else
+                    {
+                        // string word = code.WordAt(offset, true);
                         onDirectiveArg(directive, word);
+                    }
                 }
 
                 return true;
@@ -274,13 +279,21 @@ namespace Syntaxer
 
         internal static string FormatCode(string script, ref int caret)
         {
-            Output.WriteLine("FormatCode-------------------------------------------");
-            //formattedCode = formattedCode.NormalizeLineEnding();
+            Output.WriteLine("FormatCode");
+
             string code = File.ReadAllText(script);
             if (code.IsEmpty())
                 throw new Exception("The file containing code is empty");
 
+            bool escape_vs_template_var = code.Contains("$safeprojectname$");
+
+            if (escape_vs_template_var)
+                code = code.Replace("$safeprojectname$", "_safeprojectname_");
+
             string formattedCode = RoslynIntellisense.Formatter.FormatHybrid(code, "code.cs");
+
+            if (escape_vs_template_var)
+                formattedCode = formattedCode.Replace("_safeprojectname_", "$safeprojectname$");
 
             caret = SyntaxMapper.MapAbsPosition(code, caret, formattedCode);
 

@@ -109,7 +109,9 @@ namespace Syntaxer
         }
 
         static char[] delimiters = "\\\t\n\r .,:;'\"=[]{}()+-/!?@$%^&*«»><#|~`".ToCharArray();
-        static char[] delimiters_css = "\\\t\n\r .,:;'\"=[]{}()+-!?@$%^&*«»><#|~`".ToCharArray(); //removed '/' which is not a cs-script delimiter (e.g. "//css_ref")
+
+        // static char[] delimiters_css = "\\\t\n\r .,:;'\"=[]{}()+-!?@$%^&*«»><#|~`".ToCharArray(); //removed '/' which is not a cs-script delimiter (e.g. "//css_ref")
+        static char[] delimiters_css = "\\\t\n\r ,:;'\"=[]{}()+-!?@$%^&*«»><#|~`".ToCharArray(); //removed '/' and '.', which is not a cs-script delimiter (e.g. "//css_ref")
 
         public static string WordAt(this string text, int index, bool is_css = false)
         {
