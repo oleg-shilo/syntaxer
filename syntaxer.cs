@@ -262,7 +262,7 @@ namespace Syntaxer
 
                 Task.Run(() => MonitorConnections(processArgs.timeout, requestShutdown: serverSocket.Stop));
 
-                Output.WriteLine($" >> Server Started (port={processArgs.port})");
+                Output.WriteLine($" >> Server (v{Assembly.GetExecutingAssembly().GetName().Version}) Started (port={processArgs.port})");
                 new Engine().Preload();
                 Output.WriteLine($" >> Syntax engine loaded");
 
