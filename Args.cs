@@ -16,6 +16,7 @@ namespace Syntaxer
         public bool listen;
         public bool exit;
         public bool test;
+        public bool rich;
         public bool dr; // deploy roslyn
         public string[] @ref;
         public string cmd;
@@ -24,6 +25,7 @@ namespace Syntaxer
         public int port = 18000;
         public int pos;
         public bool pkill;
+        public bool collapseOverloads;
         public int short_hinted_tooltips = 1;
         public string popen;
         public int pid;

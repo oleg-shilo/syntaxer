@@ -40,6 +40,8 @@ namespace Syntaxer
     {
         static void Main(string[] args)
         {
+            // Debug.Assert(false);
+
             DeployCSScriptIntegration();
 
             var input = new Args(args);
@@ -287,7 +289,10 @@ namespace Syntaxer
                             else
                             {
                                 if (args.client != 0)
+                                {
                                     connections[args.client] = true;
+                                    // Output.WriteLine("Monitor client: " + args.client);
+                                }
                             }
 
                             Output.WriteLine(" >> Processing client request");
@@ -326,11 +331,11 @@ namespace Syntaxer
         public static string FindRefreneces(string script, int offset) => SyntaxProvider.FindRefreneces(script, offset);
 
         // "suggest_usings" - request
-        public static string FindUsings(string script, string word) => SyntaxProvider.FindUsings(script, word);
+        public static string FindUsings(string script, string word) => SyntaxProvider.FindUsings(script, word, false);
 
         // "resolve" - request
         public static string Resolve(string script, int offset)
-            => SyntaxProvider.Resolve(script, offset);
+            => SyntaxProvider.Resolve(script, offset, false);
 
         // public static DomRegion Resolve(string script, int offset) => SyntaxProvider.ResolveRaw(script, offset);
 
@@ -342,7 +347,7 @@ namespace Syntaxer
 
         // "tooltip" - request
         public static string GetTooltip(string script, int offset, string hint, bool shortHintedTooltips)
-            => SyntaxProvider.GetMemberInfo(script, offset, hint, shortHintedTooltips);
+            => SyntaxProvider.GetTooltip(script, offset, hint, shortHintedTooltips);
 
         // "project" - request
         public static Project GenerateProjectFor(string script)
@@ -350,7 +355,7 @@ namespace Syntaxer
 
         // "codemap" - request
         public static string GetCodeMap(string script)
-            => SyntaxProvider.CodeMap(script);
+            => SyntaxProvider.CodeMap(script, false);
 
         // "format" - request
         public static string FormatCode(string script, ref int caretPos)

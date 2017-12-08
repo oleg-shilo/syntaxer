@@ -61,17 +61,19 @@ namespace Syntaxer
                 if (args.op == "references")
                     result = FindRefreneces(args.script, args.pos);
                 else if (args.op.StartsWith("suggest_usings:"))
-                    result = FindUsings(args.script, args.op.Split(':').Last());
+                    result = FindUsings(args.script, args.op.Split(':').Last(), args.rich);
                 else if (args.op == "resolve")
-                    result = Resolve(args.script, args.pos);
+                    result = Resolve(args.script, args.pos, args.rich);
                 else if (args.op == "completion")
                     result = GetCompletion(args.script, args.pos);
                 else if (args.op.StartsWith("tooltip:"))
-                    result = GetMemberInfo(args.script, args.pos, args.op.Split(':').Last(), args.short_hinted_tooltips == 1);
+                    result = GetTooltip(args.script, args.pos, args.op.Split(':').Last(), args.short_hinted_tooltips == 1);
+                else if (args.op.StartsWith("memberinfo"))
+                    result = GetMemberInfo(args.script, args.pos, args.collapseOverloads);
                 else if (args.op == "project")
                     result = GenerateProjectFor(args.script);
                 else if (args.op == "codemap")
-                    result = CodeMap(args.script);
+                    result = CodeMap(args.script, args.rich);
                 else if (args.op == "format")
                 {
                     Output.WriteLine("FormatCode>");
@@ -91,17 +93,23 @@ namespace Syntaxer
             }
         }
 
-        internal static string Resolve(string script, int offset)
+        internal static string Resolve(string script, int offset, bool rich_serialization)
         {
             Output.WriteLine("Resolve");
 
             DomRegion region = ResolveRaw(script, offset);
 
-            var result = new StringBuilder();
-            result.AppendLine("file:" + region.FileName);
-            result.AppendLine("line:" + region.BeginLine);
-
-            return result.ToString().Trim();
+            if (rich_serialization)
+            {
+                return DomRegion.Serialize(region);
+            }
+            else
+            {
+                var result = new StringBuilder();
+                result.AppendLine("file:" + region.FileName);
+                result.AppendLine("line:" + region.BeginLine);
+                return result.ToString();
+            }
         }
 
         static string GetAssociatedFileExtensions(string directive)
@@ -112,7 +120,7 @@ namespace Syntaxer
                                         ("//css_reference", ".dll|.exe"));
         }
 
-        internal static bool ParseAsCssDirective(string script, string code, int offset, Action<string> onDirective, Action<string, string> onDirectiveArg)
+        internal static bool ParseAsCssDirective(string script, string code, int offset, Action<string> onDirective, Action<string, string, string> onDirectiveArg, bool ignoreEmptyArgs = true)
         {
             string word = code.WordAt(offset, true);
             string line = code.LineAt(offset);
@@ -121,7 +129,9 @@ namespace Syntaxer
                 var directive = line.TrimStart().WordAt(2, true);
                 string extensions = GetAssociatedFileExtensions(directive);
 
-                if (word == "")
+                var arg = word;
+
+                if (arg.IsEmpty() && ignoreEmptyArgs)
                 {
                     onDirective(directive);
                 }
@@ -137,8 +147,7 @@ namespace Syntaxer
                     }
                     else
                     {
-                        // string word = code.WordAt(offset, true);
-                        onDirectiveArg(directive, word);
+                        onDirectiveArg(directive, word, extensions);
                     }
                 }
 
@@ -174,6 +183,23 @@ namespace Syntaxer
             return null;
         }
 
+        internal static string[] LookopDirectivePaths(string script, int offset, string directive, string word, string extensions)
+        {
+            // if (extensions != null && word.HasText()) // file of the //css_inc or //css_ref directive
+            {
+                if (extensions != null)
+                {
+                    return CSScriptHelper.GenerateProjectFor(script)
+                                                .SearchDirs
+                                                .SelectMany(dir => extensions.Split('|').Select(x => new { ProbingDir = dir, FileExtension = x }))
+                                                .SelectMany(x =>
+                                                    Directory.GetFiles(x.ProbingDir, "*" + x.FileExtension))
+                                                    .ToArray();
+                }
+                return new string[0];
+            }
+        }
+
         internal static DomRegion ResolveRaw(string script, int offset)
         {
             string code = File.ReadAllText(script);
@@ -188,7 +214,7 @@ namespace Syntaxer
                 {
                     region = CssSyntax.Resolve(directive);
                 },
-                (directive, arg) =>
+                (directive, arg, extensions) =>
                 {
                     if (LookopDirectivePath(script, offset, directive, arg) is string file)
                         region = new DomRegion
@@ -260,7 +286,7 @@ namespace Syntaxer
             return regions.JoinBy("\n");
         }
 
-        internal static string FindUsings(string script, string word)
+        internal static string FindUsings(string script, string word, bool rich_serialization)
         {
             Output.WriteLine("FindUsings");
             string code = File.ReadAllText(script);
@@ -273,8 +299,10 @@ namespace Syntaxer
                                  .Select(f => new Tuple<string, string>(File.ReadAllText(f), f));
 
             var regions = Autocompleter.GetNamespacesFor(code, word, project.Refs, sources);
-
-            return regions.Select(x => x.Namespace).JoinBy("\n");
+            if (rich_serialization)
+                return regions.Select(Intellisense.Common.TypeInfo.Serialize).JoinSerializedLines();
+            else
+                return regions.Select(x => x.Namespace).JoinBy("\n");
         }
 
         internal static string FormatCode(string script, ref int caret)
@@ -300,7 +328,7 @@ namespace Syntaxer
             return formattedCode;
         }
 
-        internal static string CodeMap(string script)
+        internal static string CodeMap(string script, bool rich_serialization)
         {
             csscript.Log("CodeMap");
             string code = File.ReadAllText(script);
@@ -308,36 +336,46 @@ namespace Syntaxer
             if (code.IsEmpty())
                 throw new Exception("The file containing code is empty");
 
-            var members = CSScriptHelper.GetMapOf(code, true).OrderBy(x => x.ParentDisplayName).ToArray();
+            CodeMapItem[] members = CSScriptHelper.GetMapOf(code, true).OrderBy(x => x.ParentDisplayName).ToArray();
 
-            var result = new StringBuilder();
-
-            var lines = members.Select(x =>
-                                {
-                                    return new { Type = (x.ParentDisplayType + " " + x.ParentDisplayName).Trim(), Content = "    " + x.DisplayName, Line = x.Line };
-                                });
-
-            if (lines.Any())
+            if (rich_serialization)
             {
-                int maxLenghth = lines.Select(x => x.Type.Length).Max();
-                maxLenghth = Math.Max(maxLenghth, lines.Select(x => x.Content.Length).Max());
-
-                string prevType = null;
-                foreach (var item in lines)
-                {
-                    if (prevType != item.Type)
-                    {
-                        result.AppendLine();
-                        result.AppendLine(item.Type);
-                    }
-
-                    prevType = item.Type;
-                    var suffix = new string(' ', maxLenghth - item.Content.Length);
-                    result.AppendLine($"{item.Content}{suffix} :{item.Line}");
-                }
+                return members.Select(CodeMapItem.Serialize).JoinSerializedLines();
             }
+            else
+            {
+                var result = new StringBuilder();
+                var lines = members.Select(x =>
+                                    {
+                                        return new
+                                        {
+                                            Type = (x.ParentDisplayType + " " + x.ParentDisplayName).Trim(),
+                                            Content = "    " + x.DisplayName,
+                                            Line = x.Line
+                                        };
+                                    });
 
-            return result.ToString().Trim();
+                if (lines.Any())
+                {
+                    int maxLenghth = lines.Select(x => x.Type.Length).Max();
+                    maxLenghth = Math.Max(maxLenghth, lines.Select(x => x.Content.Length).Max());
+
+                    string prevType = null;
+                    foreach (var item in lines)
+                    {
+                        if (prevType != item.Type)
+                        {
+                            result.AppendLine();
+                            result.AppendLine(item.Type);
+                        }
+
+                        prevType = item.Type;
+                        var suffix = new string(' ', maxLenghth - item.Content.Length);
+                        result.AppendLine($"{item.Content}{suffix} :{item.Line}");
+                    }
+                }
+                return result.ToString().Trim();
+            }
         }
 
         internal static string GetCompletion(string script, int caret)
@@ -389,40 +427,25 @@ namespace Syntaxer
 
             IEnumerable<ICompletionData> completions = null;
 
-            string word = code.WordAt(caret, true);
-            string line = code.LineAt(caret);
-            if (word.StartsWith("//css_") || line.TrimStart().StartsWith("//css_"))
-            {
-                completions = CssCompletionData.AllDirectives;
-                if (word == "")
-                {
-                    var directive = line.TrimStart().WordAt(2, true);
-                    string extensions = directive.FirstMatch(("//css_inc", ".cs"),
-                                                             ("//css_include", ".cs"),
-                                                             ("//css_ref", ".dll|.exe"),
-                                                             ("//css_reference", ".dll|.exe"));
+            bool wasHandled = ParseAsCssDirective(script, code, caret,
+              (directive) =>
+              {
+                  completions = CssCompletionData.AllDirectives;
+              },
+              (directive, arg, extensions) =>
+              {
+                  completions = LookopDirectivePaths(script, caret, directive, arg, extensions)
+                                                .Select(file => new CssCompletionData
+                                                {
+                                                    CompletionText = Path.GetFileName(file),
+                                                    DisplayText = Path.GetFileName(file),
+                                                    Description = "File: " + file,
+                                                    CompletionType = CompletionType.file
+                                                });
+              },
+              ignoreEmptyArgs: false);
 
-                    if (extensions != null)
-                    {
-                        completions = CSScriptHelper.GenerateProjectFor(script)
-                                                    .SearchDirs
-                                                    .SelectMany(dir => extensions.Split('|').Select(x => new { ProbingDir = dir, FileExtension = x }))
-                                                    .SelectMany(x =>
-                                                    {
-                                                        var files = Directory.GetFiles(x.ProbingDir, "*" + x.FileExtension);
-
-                                                        return files.Select(file => new CssCompletionData
-                                                        {
-                                                            CompletionText = Path.GetFileName(file),
-                                                            DisplayText = Path.GetFileName(file),
-                                                            Description = "File: " + file,
-                                                            CompletionType = CompletionType.file
-                                                        });
-                                                    });
-                    }
-                }
-            }
-            else
+            if (!wasHandled)
             {
                 if (!script.EndsWith(".g.cs"))
                     CSScriptHelper.DecorateIfRequired(ref code, ref caret);
@@ -439,9 +462,10 @@ namespace Syntaxer
             return completions;
         }
 
-        internal static string GetMemberInfo(string script, int caret, string hint, bool shortHintedTooltips)
+        internal static string GetTooltip(string script, int caret, string hint, bool shortHintedTooltips)
         {
-            Output.WriteLine("GetMemberInfo");
+            // Simplified API for ST3
+            Output.WriteLine("GetTooltip");
             //Console.WriteLine("hint: " + hint);
 
             string result = null;
@@ -462,7 +486,7 @@ namespace Syntaxer
 
             ParseAsCssDirective(script, code, caret,
                loockupDirective,
-               (directive, arg) =>
+               (directive, arg, extensions) =>
                {
                    if (LookopDirectivePath(script, caret, directive, arg) is string file)
                        result = $"File: {file}";
@@ -485,7 +509,7 @@ namespace Syntaxer
                                  .ToArray();
 
             int methodStartPosTemp;
-            var items = Autocompleter.GetMemberInfo(code, caret, out methodStartPosTemp, project.Refs, sources, hint.HasAny());
+            var items = Autocompleter.GetMemberInfo(code, caret, out methodStartPosTemp, project.Refs, sources, includeOverloads: hint.HasAny());
             if (hint.HasAny())
             {
                 if (shortHintedTooltips)
@@ -519,6 +543,66 @@ namespace Syntaxer
 
             if (result.HasText())
                 result = result.NormalizeLineEnding().Replace("\r\n\r\n", "\r\n").TrimEnd();
+
+            return result;
+        }
+
+        internal static string GetMemberInfo(string script, int caret, bool collapseOverloads)
+        {
+            // Complete API for N++
+
+            Output.WriteLine("GetMemberInfo");
+            //Console.WriteLine("hint: " + hint);
+
+            string result = null;
+            string code = File.ReadAllText(script);
+            if (code.IsEmpty())
+                throw new Exception("The file containing code is empty");
+
+            void loockupDirective(string directive)
+            {
+                var css_directive = CssCompletionData.AllDirectives
+                                                     .FirstOrDefault(x => x.DisplayText == directive);
+                if (css_directive != null)
+                {
+                    result = $"Directive: {css_directive.DisplayText}\n{css_directive.Description}";
+                    result = result.NormalizeLineEnding().Replace("\r\n\r\n", "\r\n").TrimEnd();
+                }
+            };
+
+            ParseAsCssDirective(script, code, caret,
+               loockupDirective,
+               (directive, arg, extensions) =>
+               {
+                   if (LookopDirectivePath(script, caret, directive, arg) is string file)
+                       result = $"File: {file}";
+                   else
+                       loockupDirective(directive);
+               });
+
+            if (result.HasText())
+            {
+                return MemberInfoData.Serialize(new MemberInfoData { Info = result });
+            }
+
+            if (!script.EndsWith(".g.cs"))
+                CSScriptHelper.DecorateIfRequired(ref code, ref caret);
+
+            Project project = CSScriptHelper.GenerateProjectFor(script);
+            var sources = project.Files
+                                 .Where(f => f != script)
+                                 .Select(f => new Tuple<string, string>(File.ReadAllText(f), f))
+                                 .ToArray();
+
+            int methodStartPosTemp;
+            var items = Autocompleter.GetMemberInfo(code, caret, out methodStartPosTemp, project.Refs, sources, includeOverloads: !collapseOverloads);
+
+            if (collapseOverloads)
+                items = items.Take(1);
+
+            result = items.Select(x => new MemberInfoData { Info = x, MemberStartPosition = methodStartPosTemp })
+                          .Select(MemberInfoData.Serialize)
+                          .JoinSerializedLines();
 
             return result;
         }
