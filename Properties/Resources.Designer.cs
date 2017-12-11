@@ -19,7 +19,7 @@ namespace syntaxer.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -104,6 +104,26 @@ namespace syntaxer.Properties {
             get {
                 object obj = ResourceManager.GetObject("csi_exe", resourceCulture);
                 return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;configuration&gt;
+        ///  &lt;runtime&gt;
+        ///    &lt;assemblyBinding xmlns=&quot;urn:schemas-microsoft-com:asm.v1&quot;&gt;
+        ///      &lt;dependentAssembly&gt;
+        ///        &lt;assemblyIdentity name=&quot;Microsoft.CodeAnalysis&quot; publicKeyToken=&quot;31bf3856ad364e35&quot; culture=&quot;neutral&quot; /&gt;
+        ///        &lt;bindingRedirect oldVersion=&quot;0.0.0.0-2.0.0.0&quot; newVersion=&quot;2.0.0.0&quot; /&gt;
+        ///      &lt;/dependentAssembly&gt;
+        ///    &lt;/assemblyBinding&gt;
+        ///    &lt;assemblyBinding xmlns=&quot;urn:schemas-microsoft-com:asm.v1&quot;&gt;
+        ///      &lt;dependentAssembly&gt;
+        ///        &lt;assembly [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string csi_exe_config {
+            get {
+                return ResourceManager.GetString("csi_exe_config", resourceCulture);
             }
         }
         
@@ -543,6 +563,16 @@ namespace syntaxer.Properties {
         internal static byte[] System_Reflection_Metadata {
             get {
                 object obj = ResourceManager.GetObject("System_Reflection_Metadata", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] System_Runtime_InteropServices_RuntimeInformation {
+            get {
+                object obj = ResourceManager.GetObject("System_Runtime_InteropServices_RuntimeInformation", resourceCulture);
                 return ((byte[])(obj));
             }
         }

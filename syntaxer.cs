@@ -156,26 +156,29 @@ namespace Syntaxer
             _action("csc.rsp", syntaxer.Properties.Resources.csc_rsp);
             _action("csi.exe", syntaxer.Properties.Resources.csi_exe);
             _action("csi.rsp", syntaxer.Properties.Resources.csi_rsp);
+            _action("csi.exe.config", Encoding.UTF8.GetBytes(syntaxer.Properties.Resources.csi_exe_config));
             _action("Esent.Interop.dll", syntaxer.Properties.Resources.Esent_Interop);
             _action("Microsoft.Build.dll", syntaxer.Properties.Resources.Microsoft_Build);
             _action("Microsoft.Build.Framework.dll", syntaxer.Properties.Resources.Microsoft_Build_Framework);
             _action("Microsoft.Build.Tasks.CodeAnalysis.dll", syntaxer.Properties.Resources.Microsoft_Build_Tasks_CodeAnalysis);
             _action("Microsoft.Build.Tasks.Core.dll", syntaxer.Properties.Resources.Microsoft_Build_Tasks_Core);
             _action("Microsoft.Build.Utilities.Core.dll", syntaxer.Properties.Resources.Microsoft_Build_Utilities_Core);
-            _action("Microsoft.CodeAnalysis.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis);
             _action("Microsoft.CodeAnalysis.CSharp.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_CSharp);
             _action("Microsoft.CodeAnalysis.CSharp.Scripting.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_CSharp_Scripting);
             _action("Microsoft.CodeAnalysis.CSharp.Workspaces.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_CSharp_Workspaces);
+            _action("Microsoft.CodeAnalysis.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis);
             _action("Microsoft.CodeAnalysis.Elfie.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_Elfie);
             _action("Microsoft.CodeAnalysis.Scripting.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_Scripting);
             _action("Microsoft.CodeAnalysis.VisualBasic.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_VisualBasic);
             _action("Microsoft.CodeAnalysis.VisualBasic.Workspaces.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_VisualBasic_Workspaces);
-            _action("Microsoft.CodeAnalysis.Workspaces.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_Workspaces);
             _action("Microsoft.CodeAnalysis.Workspaces.Desktop.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_Workspaces_Desktop);
+            _action("Microsoft.CodeAnalysis.Workspaces.dll", syntaxer.Properties.Resources.Microsoft_CodeAnalysis_Workspaces);
+            // Microsoft.CodeDom.Providers.DotNetCompilerPlatform included in CS-Script RoslynProvider
             _action("Microsoft.CSharp.Core.targets", syntaxer.Properties.Resources.Microsoft_CSharp_Core);
             _action("Microsoft.DiaSymReader.Native.amd64.dll", syntaxer.Properties.Resources.Microsoft_DiaSymReader_Native_amd64);
             _action("Microsoft.DiaSymReader.Native.x86.dll", syntaxer.Properties.Resources.Microsoft_DiaSymReader_Native_x86);
             _action("Microsoft.VisualBasic.Core.targets", syntaxer.Properties.Resources.Microsoft_VisualBasic_Core);
+            _action("Microsoft.VisualStudio.RemoteControl.dll", syntaxer.Properties.Resources.Microsoft_VisualStudio_RemoteControl);
             _action("Microsoft.Win32.Primitives.dll", syntaxer.Properties.Resources.Microsoft_Win32_Primitives);
             _action("System.AppContext.dll", syntaxer.Properties.Resources.System_AppContext);
             _action("System.Collections.Immutable.dll", syntaxer.Properties.Resources.System_Collections_Immutable);
@@ -194,6 +197,7 @@ namespace Syntaxer
             _action("System.IO.FileSystem.Primitives.dll", syntaxer.Properties.Resources.System_IO_FileSystem_Primitives);
             _action("System.IO.Pipes.dll", syntaxer.Properties.Resources.System_IO_Pipes);
             _action("System.Reflection.Metadata.dll", syntaxer.Properties.Resources.System_Reflection_Metadata);
+            _action("System.Runtime.InteropServices.RuntimeInformation.dll", syntaxer.Properties.Resources.System_Runtime_InteropServices_RuntimeInformation);
             _action("System.Security.AccessControl.dll", syntaxer.Properties.Resources.System_Security_AccessControl);
             _action("System.Security.Claims.dll", syntaxer.Properties.Resources.System_Security_Claims);
             _action("System.Security.Cryptography.Algorithms.dll", syntaxer.Properties.Resources.System_Security_Cryptography_Algorithms);
@@ -210,11 +214,10 @@ namespace Syntaxer
             _action("System.Xml.XPath.dll", syntaxer.Properties.Resources.System_Xml_XPath);
             _action("System.Xml.XPath.XDocument.dll", syntaxer.Properties.Resources.System_Xml_XPath_XDocument);
             _action("vbc.exe", syntaxer.Properties.Resources.vbc);
+            _action("vbc.exe.config", Encoding.UTF8.GetBytes(syntaxer.Properties.Resources.vbc_exe));
             _action("vbc.rsp", syntaxer.Properties.Resources.vbc1);
             _action("VBCSCompiler.exe", syntaxer.Properties.Resources.VBCSCompiler);
             _action("VBCSCompiler.exe.config", Encoding.UTF8.GetBytes(syntaxer.Properties.Resources.VBCSCompiler_exe));
-            _action("vbc.exe.config", Encoding.UTF8.GetBytes(syntaxer.Properties.Resources.vbc_exe));
-            _action("Microsoft.VisualStudio.RemoteControl.dll", syntaxer.Properties.Resources.Microsoft_VisualStudio_RemoteControl);
         }
 
         static Assembly Probe(string dir, string asmName)

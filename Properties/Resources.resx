@@ -124,6 +124,9 @@
   <data name="csc_exe_config" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Roslyn\csc.exe.config;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
+  <data name="csi_exe_config" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\csi.exe.config;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
   <data name="csc_rsp" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Roslyn\csc.rsp;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
@@ -256,8 +259,12 @@
   <data name="System_Reflection_Metadata" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Roslyn\System.Reflection.Metadata.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  
   <data name="System_Security_AccessControl" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Roslyn\System.Security.AccessControl.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="System_Runtime_InteropServices_RuntimeInformation" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Roslyn\System.Runtime.InteropServices.RuntimeInformation.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="System_Security_Claims" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Roslyn\System.Security.Claims.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
