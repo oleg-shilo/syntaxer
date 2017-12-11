@@ -67,11 +67,13 @@ namespace Syntaxer
         }
 
         static string mono_root;
+        static string local_dir = Assembly.GetExecutingAssembly().Location.GetDirName();
 
         private static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
         {
             return Probe(mono_root, args.Name) ??
-                   Probe(mono_root.PathJoin("Fasades"), args.Name);
+                   Probe(mono_root.PathJoin("Fasades"), args.Name) ??
+                   Probe(local_dir, args.Name);
 
             // return Probe("/usr/lib/mono/4.5", args.Name) ??
             //        Probe("/usr/lib/mono/4.5/Fasades", args.Name) ??
