@@ -18,7 +18,7 @@ class Script
         var roslyn_intellisense_debug_dir = Environment.ExpandEnvironmentVariables(@"%GITHUB_PROJECTS%\cs-script.npp\src\Roslyn.Intellisesne\Roslyn.Intellisense\bin\Debug");
         var roslyn_compilers_dir = Directory.GetDirectories(roslyn_packages, "Microsoft.Net.Compilers.*").OrderBy(x => x).LastOrDefault() + "\\tools";
 
-        print("Agregating Roslyn");
+        print("Aggregating Roslyn");
         print("  assemblies from ", roslyn_intellisense_debug_dir);
         print("  compilers from ", roslyn_compilers_dir);
 

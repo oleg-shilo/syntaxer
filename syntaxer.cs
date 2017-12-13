@@ -40,8 +40,7 @@ namespace Syntaxer
     {
         static void Main(string[] args)
         {
-            // Debug.Assert(false);
-
+            //     Debug.Assert(false);
             DeployCSScriptIntegration();
 
             var input = new Args(args);
@@ -67,13 +66,23 @@ namespace Syntaxer
         }
 
         static string mono_root;
-        static string local_dir = Assembly.GetExecutingAssembly().Location.GetDirName();
+
+        static string local_dir;
+
+        static string Local_dir
+        {
+            get
+            {
+                // must be assigned here as if it is assigned in the field declaration it triggers premature assembly loading.
+                return local_dir = local_dir ?? Assembly.GetExecutingAssembly().Location.GetDirName();
+            }
+        }
 
         private static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
         {
             return Probe(mono_root, args.Name) ??
                    Probe(mono_root.PathJoin("Fasades"), args.Name) ??
-                   Probe(local_dir, args.Name);
+                   Probe(Local_dir, args.Name);
 
             // return Probe("/usr/lib/mono/4.5", args.Name) ??
             //        Probe("/usr/lib/mono/4.5/Fasades", args.Name) ??

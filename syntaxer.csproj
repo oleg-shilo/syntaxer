@@ -340,7 +340,7 @@ rem copy "$(ProjectDir)..\..\..\cs-script.npp\src\Intellisense.Interface\bin\$(C
     <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\cs-script-sublime\bin\$(TargetFileName)"
 copy "$(TargetPath)" "$(ProjectDir)..\..\..\cs-script.npp\src\CSScriptNpp\CSScriptNpp\$(TargetFileName)"
 copy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\..\cs-script.npp\src\CSScriptNpp\CSScriptNpp\$(TargetName).pdb"
-</PostBuildEvent>
+copy "$(TargetPath)" "$(TargetDir)bin\$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -24,6 +24,9 @@ namespace Syntaxer
         {
             try
             {
+                if (args.script.HasText() && Path.GetExtension(args.script).ToLower() == ".vb")
+                    Autocompleter.Language = "VB";
+
                 if (args.popen.HasText())
                 {
                     string[] parts = args.popen.Split('|').ToArray();
@@ -90,6 +93,10 @@ namespace Syntaxer
             catch (Exception e)
             {
                 return "<error>" + e;
+            }
+            finally
+            {
+                Autocompleter.Language = "C#";
             }
         }
 
@@ -457,6 +464,7 @@ namespace Syntaxer
                                      .ToArray();
 
                 completions = Autocompleter.GetAutocompletionFor(code, caret, project.Refs, sources);
+
                 var count = completions.Count();
             }
             return completions;
