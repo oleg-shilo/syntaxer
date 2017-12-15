@@ -76,7 +76,9 @@ namespace Syntaxer
                 else if (args.op == "project")
                     result = GenerateProjectFor(args.script);
                 else if (args.op == "codemap")
-                    result = CodeMap(args.script, args.rich);
+                    result = CodeMap(args.script, args.rich, false);
+                else if (args.op == "codemap_vscode")
+                    result = CodeMap(args.script, args.rich, vsCode: true);
                 else if (args.op == "format")
                 {
                     Output.WriteLine("FormatCode>");
@@ -335,7 +337,7 @@ namespace Syntaxer
             return formattedCode;
         }
 
-        internal static string CodeMap(string script, bool rich_serialization)
+        internal static string CodeMap(string script, bool rich_serialization, bool vsCode)
         {
             csscript.Log("CodeMap");
             string code = File.ReadAllText(script);
@@ -345,11 +347,59 @@ namespace Syntaxer
 
             CodeMapItem[] members = CSScriptHelper.GetMapOf(code, true).OrderBy(x => x.ParentDisplayName).ToArray();
 
-            if (rich_serialization)
+            bool notepad_pp = rich_serialization;
+            bool vs_code = vsCode;
+            bool sublime = !vsCode && !notepad_pp;
+
+            if (notepad_pp)
             {
                 return members.Select(CodeMapItem.Serialize).JoinSerializedLines();
             }
-            else
+
+            if (vs_code)
+            {
+                // https://github.com/oleg-shilo/codemap.vscode/wiki/Adding-custom-mappers
+                // [indent]<name>|<line>|<icon>
+
+                //see "static AutoCompiler.CodeMapItem[] GetMapOfCSharp(string code, bool decorated)" for possible MemberType
+
+                var result = new StringBuilder();
+                var lines = members.Select(x =>
+                    new
+                    {
+                        ParentType = (x.ParentDisplayName).Trim(),
+                        ParentTypeIcon = x.ParentDisplayType == "interface" ? "interface" : "class",
+                        Indent = "  ",
+                        Name = x.DisplayName,
+                        Line = x.Line,
+                        Icon = (x.MemberType == "Enum" ? "class" :
+                                x.MemberType == "Method" ? "function" :
+                                x.MemberType == "Property" ? "property" :
+                                x.MemberType == "Field" ? "field" :
+                                "none")
+                    });
+
+                if (lines.Any())
+                {
+                    foreach (var group in lines.GroupBy(x => x.ParentType))
+                    {
+                        bool first = true;
+                        foreach (var item in group)
+                        {
+                            var parentType = group.Key;
+                            if (first)
+                            {
+                                first = false;
+                                result.AppendLine($"{parentType}||{item.ParentTypeIcon}");
+                            }
+                            result.AppendLine($"{item.Indent}{item.Name}|{item.Line}|{item.Icon}");
+                        }
+                    }
+                }
+                return result.ToString().Trim();
+            }
+
+            if (sublime)
             {
                 var result = new StringBuilder();
                 var lines = members.Select(x =>
@@ -383,6 +433,8 @@ namespace Syntaxer
                 }
                 return result.ToString().Trim();
             }
+
+            return null;
         }
 
         internal static string GetCompletion(string script, int caret)

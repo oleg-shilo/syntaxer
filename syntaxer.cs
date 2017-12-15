@@ -369,7 +369,7 @@ namespace Syntaxer
 
         // "codemap" - request
         public static string GetCodeMap(string script)
-            => SyntaxProvider.CodeMap(script, false);
+            => SyntaxProvider.CodeMap(script, false, false);
 
         // "format" - request
         public static string FormatCode(string script, ref int caretPos)
