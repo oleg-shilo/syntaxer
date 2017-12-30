@@ -389,6 +389,8 @@ namespace Syntaxer
                             var parentType = group.Key;
                             if (first)
                             {
+                                // do not pass any line number for class as it may be declared
+                                // at multiple locations (e.g. partial classes)
                                 first = false;
                                 result.AppendLine($"{parentType}||{item.ParentTypeIcon}");
                             }

@@ -149,6 +149,11 @@ namespace Syntaxer
             return dir;
         }
 
+        public static string ShortName(this ResolveEventArgs args)
+        {
+            return args.Name.Split(',').First();
+        }
+
         public static string EnsureDir(this string dir)
         {
             if (!Directory.Exists(dir))

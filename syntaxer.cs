@@ -82,11 +82,8 @@ namespace Syntaxer
         {
             return Probe(mono_root, args.Name) ??
                    Probe(mono_root.PathJoin("Fasades"), args.Name) ??
-                   Probe(Local_dir, args.Name);
-
-            // return Probe("/usr/lib/mono/4.5", args.Name) ??
-            //        Probe("/usr/lib/mono/4.5/Fasades", args.Name) ??
-            //        Probe("/home/user/.vscode/extensions/ms-vscode.csharp-1.12.1/.omnisharp/omnisharp", args.Name);
+                   Probe(Local_dir, args.Name) ??
+                   ProbeAlreadyLoaded(args.ShortName());
         }
 
         static void Run(Args input)
@@ -121,7 +118,10 @@ namespace Syntaxer
             var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
 
             ForEachRoslynAssembly((name, bytes) =>
-                File.WriteAllBytes(Path.Combine(dir, name), bytes));
+            {
+                if (!File.Exists(Path.Combine(dir, name)))
+                    File.WriteAllBytes(Path.Combine(dir, name), bytes);
+            });
         }
 
         static void DeployCSScriptIntegration()
@@ -141,7 +141,9 @@ namespace Syntaxer
         static void LoadRoslyn()
         {
             ForEachRoslynAssembly((name, bytes) =>
-                Assembly.Load(bytes));
+            {
+                Assembly.Load(bytes);
+            });
         }
 
         static void ForEachCSScriptAssembly(Action<string, byte[]> action)
@@ -238,6 +240,11 @@ namespace Syntaxer
                 return Assembly.LoadFrom(file);
             else
                 return null;
+        }
+
+        static Assembly ProbeAlreadyLoaded(string asmName)
+        {
+            return AppDomain.CurrentDomain.GetAssemblies().Where(x => x.GetName().Name == asmName).FirstOrDefault();
         }
     }
 
