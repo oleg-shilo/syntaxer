@@ -57,7 +57,10 @@ namespace Syntaxer
                 }
 
                 if (!File.Exists(args.script))
-                    return $"<error>File '{args.script}' doesn't exist";
+                    if (args.script.HasText())
+                        return $"<error>File '{args.script}' doesn't exist";
+                    else
+                        return null;
 
                 string result = "";
 

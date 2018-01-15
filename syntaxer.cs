@@ -40,7 +40,7 @@ namespace Syntaxer
     {
         static void Main(string[] args)
         {
-            //     Debug.Assert(false);
+            // Debug.Assert(false);
             DeployCSScriptIntegration();
 
             var input = new Args(args);
@@ -51,7 +51,8 @@ namespace Syntaxer
             // -listen -timeout:60000 -cscs_path:./cscs.exe
             if (Environment.OSVersion.Platform.ToString().StartsWith("Win"))
             {
-                DeployRoslyn();
+                if (!input.dr) // not already deployed
+                    DeployRoslyn();
             }
             else
             {
