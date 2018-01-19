@@ -79,11 +79,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Roslyn\System.Collections.Immutable.dll</HintPath>
     </Reference>
-    <Reference Include="System.Composition.AttributedModel, Version=1.0.27.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="System.Composition.Convention, Version=1.0.27.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="System.Composition.Hosting, Version=1.0.27.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="System.Composition.Runtime, Version=1.0.27.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="System.Composition.TypedParts, Version=1.0.27.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System.Console, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System.Core" />
     <Reference Include="System.Diagnostics.FileVersionInfo, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
@@ -130,7 +125,6 @@
     <Compile Include="Test.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
     <None Include="Roslyn\csc.exe.config" />
     <None Include="Roslyn\csc.rsp" />
     <None Include="Roslyn\csi.exe.config" />
@@ -337,10 +331,11 @@ rem copy "$(ProjectDir)..\..\..\cs-script.npp\src\Intellisense.Interface\bin\$(C
 </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\cs-script-sublime\bin\$(TargetFileName)"
+    <PostBuildEvent>md "$(TargetDir)..\..\bin"
+copy "$(TargetPath)" "$(ProjectDir)..\cs-script-sublime\bin\$(TargetFileName)"
 copy "$(TargetPath)" "$(ProjectDir)..\..\..\cs-script.npp\src\CSScriptNpp\CSScriptNpp\$(TargetFileName)"
 copy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\..\cs-script.npp\src\CSScriptNpp\CSScriptNpp\$(TargetName).pdb"
-copy "$(TargetPath)" "$(TargetDir)bin\$(TargetFileName)"</PostBuildEvent>
+copy "$(TargetPath)" "$(TargetDir)..\..\bin\$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
