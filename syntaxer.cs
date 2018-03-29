@@ -15,6 +15,7 @@ using RoslynIntellisense;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
+using System.Text.RegularExpressions;
 
 //using csscript;
 
@@ -36,6 +37,11 @@ using Microsoft.CodeAnalysis.MSBuild;
 
 namespace Syntaxer
 {
+    // Ports:
+    // 18000 - Sublime Text 3
+    // 18001 - Notepad++
+    // 18002 - VSCode.CodeMap
+    // 18003 - VSCode.CS-Script
     class Server
     {
         static void Main(string[] args)

@@ -15,6 +15,7 @@ using RoslynIntellisense;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
+using System.Text.RegularExpressions;
 
 namespace Syntaxer
 {
@@ -195,21 +196,20 @@ namespace Syntaxer
             return null;
         }
 
-        internal static string[] LookopDirectivePaths(string script, int offset, string directive, string word, string extensions)
+        internal static string[] LookupDirectivePaths(string script, int offset, string directive, string word, string extensions)
         {
-            // if (extensions != null && word.HasText()) // file of the //css_inc or //css_ref directive
+            if (extensions != null)
             {
-                if (extensions != null)
-                {
-                    return CSScriptHelper.GenerateProjectFor(script)
-                                                .SearchDirs
-                                                .SelectMany(dir => extensions.Split('|').Select(x => new { ProbingDir = dir, FileExtension = x }))
-                                                .SelectMany(x =>
-                                                    Directory.GetFiles(x.ProbingDir, "*" + x.FileExtension))
-                                                    .ToArray();
-                }
-                return new string[0];
+                var originalFile = script.Replace(".$temp$.", "."); // it may be temp file
+                return CSScriptHelper.GenerateProjectFor(script)
+                                            .SearchDirs
+                                            .SelectMany(dir => extensions.Split('|').Select(x => new { ProbingDir = dir, FileExtension = x }))
+                                            .SelectMany(x => Directory.GetFiles(x.ProbingDir, "*" + x.FileExtension))
+                                            .Where(x => !x.Contains(".$temp$.") && // exclude all temp files
+                                                         x != originalFile)
+                                            .ToArray();
             }
+            return new string[0];
         }
 
         internal static DomRegion ResolveRaw(string script, int offset)
@@ -498,7 +498,7 @@ namespace Syntaxer
               },
               (directive, arg, extensions) =>
               {
-                  completions = LookopDirectivePaths(script, caret, directive, arg, extensions)
+                  completions = LookupDirectivePaths(script, caret, directive, arg, extensions)
                                                 .Select(file => new CssCompletionData
                                                 {
                                                     CompletionText = Path.GetFileName(file),

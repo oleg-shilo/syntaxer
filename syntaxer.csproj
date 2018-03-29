@@ -32,6 +32,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject />
@@ -332,9 +333,14 @@ rem copy "$(ProjectDir)..\..\..\cs-script.npp\src\Intellisense.Interface\bin\$(C
   </PropertyGroup>
   <PropertyGroup>
     <PostBuildEvent>md "$(TargetDir)..\..\bin"
+echo --------
+echo Push $(TargetFileName) to all IDE plugins sources...
+
 copy "$(TargetPath)" "$(ProjectDir)..\cs-script-sublime\bin\$(TargetFileName)"
 copy "$(TargetPath)" "$(ProjectDir)..\..\..\cs-script.npp\src\CSScriptNpp\CSScriptNpp\$(TargetFileName)"
-copy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\..\cs-script.npp\src\CSScriptNpp\CSScriptNpp\$(TargetName).pdb"
+copy "$(TargetPath)" "$(ProjectDir)..\..\..\VSCode\codemap.vscode\bin\$(TargetFileName)"
+
+
 copy "$(TargetPath)" "$(TargetDir)..\..\bin\$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
