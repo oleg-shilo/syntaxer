@@ -51,7 +51,7 @@ namespace Syntaxer
                 {
                     if (csscript.cscs_path != args.cscs_path)
                     {
-                        csscript.cscs_path = args.cscs_path;
+                        csscript.cscs_path = Path.GetFullPath(args.cscs_path);
                         Output.WriteLine(" >> cscs.exe is remapped to: " + csscript.cscs_path);
                     }
                     return null;
@@ -111,6 +111,8 @@ namespace Syntaxer
             Output.WriteLine("Resolve");
 
             DomRegion region = ResolveRaw(script, offset);
+
+            fullyLoaded = true;
 
             if (rich_serialization)
             {
@@ -181,14 +183,19 @@ namespace Syntaxer
                 var probing_dirs = CSScriptHelper.GenerateProjectFor(script)
                                                  .SearchDirs;
 
-                var match = probing_dirs.Select(dir => Directory.GetFiles(dir, "*")
-                                                                .FirstOrDefault(file =>
-                                                                {
-                                                                    return Path.GetFileName(file).IsSameAs(word, ignoreCase)
-                                                                                   ||
-                                                                                  (Path.GetFileNameWithoutExtension(file).IsSameAs(word, ignoreCase) &&
-                                                                                   extensions.Contains(Path.GetExtension(file)));
-                                                                }))
+                var match = probing_dirs.Select(dir =>
+                                                {
+                                                    if (Directory.Exists(dir))
+                                                        return Directory.GetFiles(dir, "*")
+                                                                                        .FirstOrDefault(file =>
+                                                                                        {
+                                                                                            return Path.GetFileName(file).IsSameAs(word, ignoreCase)
+                                                                                                           ||
+                                                                                                          (Path.GetFileNameWithoutExtension(file).IsSameAs(word, ignoreCase) &&
+                                                                                                           extensions.Contains(Path.GetExtension(file)));
+                                                                                        });
+                                                    else return null;
+                                                })
                                         .FirstOrDefault(x => x != null);
 
                 return match;
@@ -203,6 +210,7 @@ namespace Syntaxer
                 var originalFile = script.Replace(".$temp$.", "."); // it may be temp file
                 return CSScriptHelper.GenerateProjectFor(script)
                                             .SearchDirs
+                                            .Where(dir => Directory.Exists(dir))
                                             .SelectMany(dir => extensions.Split('|').Select(x => new { ProbingDir = dir, FileExtension = x }))
                                             .SelectMany(x => Directory.GetFiles(x.ProbingDir, "*" + x.FileExtension))
                                             .Where(x => !x.Contains(".$temp$.") && // exclude all temp files
@@ -293,8 +301,8 @@ namespace Syntaxer
                                  .Select(f => new Tuple<string, string>(File.ReadAllText(f), f))
                                  .ToArray();
 
-            var regions = Autocompleter.FindReferencess(code, offset, script, project.Refs, sources);
-
+            var regions = Autocompleter.FindReferences(code, offset, script, project.Refs, sources);
+            fullyLoaded = true;
             return regions.JoinBy("\n");
         }
 
@@ -311,6 +319,9 @@ namespace Syntaxer
                                  .Select(f => new Tuple<string, string>(File.ReadAllText(f), f));
 
             var regions = Autocompleter.GetNamespacesFor(code, word, project.Refs, sources);
+
+            fullyLoaded = true;
+
             if (rich_serialization)
                 return regions.Select(Intellisense.Common.TypeInfo.Serialize).JoinSerializedLines();
             else
@@ -337,6 +348,8 @@ namespace Syntaxer
 
             caret = SyntaxMapper.MapAbsPosition(code, caret, formattedCode);
 
+            fullyLoaded = true;
+
             return formattedCode;
         }
 
@@ -349,6 +362,8 @@ namespace Syntaxer
                 throw new Exception("The file containing code is empty");
 
             CodeMapItem[] members = CSScriptHelper.GetMapOf(code, true).OrderBy(x => x.ParentDisplayName).ToArray();
+
+            fullyLoaded = true;
 
             bool notepad_pp = rich_serialization;
             bool vs_code = vsCode;
@@ -478,6 +493,8 @@ namespace Syntaxer
                 result.AppendLine($"{display}\t{type}|{completion}");
             }
 
+            fullyLoaded = true;
+
             //Console.WriteLine(">>>>>" + result.ToString().Trim());
             return result.ToString().Trim();
         }
@@ -527,6 +544,8 @@ namespace Syntaxer
             return completions;
         }
 
+        static internal bool fullyLoaded = false;
+
         internal static string GetTooltip(string script, int caret, string hint, bool shortHintedTooltips)
         {
             // Simplified API for ST3
@@ -575,6 +594,7 @@ namespace Syntaxer
 
             int methodStartPosTemp;
             var items = Autocompleter.GetMemberInfo(code, caret, out methodStartPosTemp, project.Refs, sources, includeOverloads: hint.HasAny());
+            fullyLoaded = true;
             if (hint.HasAny())
             {
                 if (shortHintedTooltips)
@@ -706,7 +726,9 @@ class Script
     }
 }";
 
-        public static string testCode7b = @"
+        public static string testCode7b = preloadCode;
+
+        public const string preloadCode = @"
 using System;
 using System.Linq;
 using System.Collections.Generic;

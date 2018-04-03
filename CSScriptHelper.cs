@@ -35,7 +35,8 @@ namespace Syntaxer
     //need to use reflection so cscs.exe can be remapped dynamically
     internal static class csscript
     {
-        internal static string default_cscs_path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "cscs.exe");
+        internal static string default_cscs_path = Assembly.GetExecutingAssembly().Location.GetDirName().PathJoin("cscs.exe");
+        internal static string default_cscs_path2 = Assembly.GetExecutingAssembly().Location.GetDirName().PathJoin("..", "cscs.exe");
 
         internal static void Log(string message)
         {
@@ -56,19 +57,20 @@ namespace Syntaxer
             {
                 lock (typeof(csscript))
                 {
-                    //csscript.Log("Cscs_asm=" + (_cscs_asm == null ? "<null>" : "<asm>"));
-                    //csscript.Log("cscs_path=" + cscs_path);
-                    //csscript.Log("exists(cscs_path)=" + File.Exists(Path.GetFullPath(cscs_path)));
+                    // csscript.Log("Cscs_asm=" + (_cscs_asm == null ? "<null>" : "<asm>"));
+                    // csscript.Log("cscs_path=" + cscs_path);
                     if (_cscs_asm == null)
                     {
                         try
                         {
+                            if (cscs_path.IsEmpty())
+                                csscript.Log($"Error: cscs_path is empty");
                             _cscs_asm = Assembly.Load(File.ReadAllBytes(cscs_path));
                         }
                         catch (Exception e)
                         {
                             Log(e.ToString());
-                            throw new Exception($"Cannot load cscs.exe assembly from{cscs_path}");
+                            throw new Exception($"Cannot load cscs.exe assembly from {cscs_path}");
                         }
                     }
                     return _cscs_asm;
@@ -91,6 +93,11 @@ namespace Syntaxer
                     else
                         _cscs_path = value;
 
+                    if (_cscs_path != null && File.Exists(_cscs_path))
+                        _cscs_path = Path.GetFullPath(_cscs_path);
+
+                    Console.WriteLine("cscs_path set to: " + _cscs_path);
+                    // Console.WriteLine("Setting cscs.exe ...");
                     //CSScriptProxy.TriggerCompilerLoading();
                 }
             }

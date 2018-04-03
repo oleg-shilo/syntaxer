@@ -22,19 +22,23 @@ namespace Syntaxer
     {
         public static void All()
         {
-            // Test.Resolving();
-            // Test.Format();
-            // Test.Project();
-            // Test.Completion();
+            var trigegr_loadig_var = csscript.Cscs_asm;
+
+            Test.Resolving();
+            Test.Format();
+            Test.Project();
+            Test.Completion();
+            Test.Tooltip();
 
             // Test.CSSCompletion();
             // Test.CSSResolving();
-            Test.CSSResolving2();
+            // Test.CSSResolving2();
             // Test.CSSTooltipResolving();
         }
 
         public static void Format()
         {
+            Output.WriteLine("---");
             Output.Write("Formatting: ");
 
             // $safeprojectname$
@@ -100,6 +104,7 @@ namespace Syntaxer
         {
             TestScript(script =>
             {
+                Output.WriteLine("---");
                 Output.WriteLine("Generating project: ");
 
                 Project project = CSScriptHelper.GenerateProjectFor(script);
@@ -115,6 +120,7 @@ namespace Syntaxer
         {
             TestScript(script =>
             {
+                Output.WriteLine("---");
                 Console.Write("Autocompletion: ");
 
                 string code = SyntaxProvider.testCode7b;
@@ -241,6 +247,7 @@ namespace Syntaxer
         {
             TestScript(script =>
             {
+                Output.WriteLine("---");
                 Output.Write("Resolve symbol: ");
                 string code = SyntaxProvider.testCode7b;
 
@@ -254,10 +261,31 @@ namespace Syntaxer
 
                 var region = Services.Resolve(script, caret);
 
-                string info = "";
+                Output.WriteLine("OK - " + 1 + " symbol info item(s)...");
+                Output.WriteLine("    '" + region.GetLines().FirstOrDefault() + "'");
+            });
+        }
 
-                Output.WriteLine("OK - " + info.Count() + " symbol info item(s)...");
-                Output.WriteLine("    '" + info.GetLines().FirstOrDefault() + "'");
+        public static void Tooltip()
+        {
+            TestScript(script =>
+            {
+                Output.WriteLine("---");
+                Output.Write("Get tooltip: ");
+                string code = SyntaxProvider.testCode7b;
+
+                File.WriteAllText(script, code);
+
+                var pattern = "Console.Write";
+                // pattern = "info.ver";
+
+                var caret = code.IndexOf(pattern) + pattern.Length;
+                string word = code.WordAt(caret);
+
+                var tooltip = Services.GetTooltip(script, caret, null, true);
+
+                Output.WriteLine("OK");
+                Output.WriteLine("    '" + tooltip.GetLines().FirstOrDefault() + "'");
             });
         }
     }

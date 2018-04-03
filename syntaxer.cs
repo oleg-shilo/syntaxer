@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -9,13 +8,8 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
-using Intellisense.Common;
 using RoslynIntellisense;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.MSBuild;
-using System.Text.RegularExpressions;
 
 //using csscript;
 
@@ -44,6 +38,8 @@ namespace Syntaxer
     // 18003 - VSCode.CS-Script
     class Server
     {
+        // -port:18003 -listen -timeout:60000 cscs_path:C:\Users\<user>\AppData\Roaming\Code\User\cs-script.user\syntaxer\1.2.2.0\cscs.exe
+
         static void Main(string[] args)
         {
             // Debug.Assert(false);
@@ -62,9 +58,9 @@ namespace Syntaxer
             }
             else
             {
-                // LoadCSScriptIntegration();
                 LoadRoslyn();
             }
+
             mono_root = Path.GetDirectoryName(typeof(string).Assembly.Location);
             Output.WriteLine(mono_root);
             AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
@@ -95,24 +91,37 @@ namespace Syntaxer
 
         static void Run(Args input)
         {
+            if (input.cscs_path != null)
+            {
+                csscript.cscs_path = Path.GetFullPath(input.cscs_path);
+            }
+
+            if (csscript.cscs_path == null || !Directory.Exists(csscript.cscs_path))
+            {
+                Console.WriteLine("Probing cscs.exe ...");
+                if (File.Exists(csscript.default_cscs_path))
+                {
+                    csscript.cscs_path = csscript.default_cscs_path;
+                }
+                else if (File.Exists(csscript.default_cscs_path2))
+                {
+                    csscript.cscs_path = csscript.default_cscs_path2;
+                }
+                else
+                    Console.WriteLine("Probing cscs.exe failed...");
+            }
+            else
+                Console.WriteLine("cscs.exe: " + csscript.cscs_path);
+
             if (input.test)
             {
-                // Test.Resolving();
-                // Test.Format();
-                // Test.Project();
-                // Test.Completion();
+                if (csscript.cscs_path == null)
+                    csscript.cscs_path = csscript.default_cscs_path;
 
-                // Test.CSSCompletion();
-                // Test.CSSResolving();
-                // Test.CSSResolving2();
-                // Test.CSSTooltipResolving();
                 Test.All();
             }
             else
             {
-                if (input.cscs_path != null)
-                    csscript.cscs_path = input.cscs_path;
-
                 if (input.listen)
                     SocketServer.Listen(input);
                 else
@@ -292,6 +301,7 @@ namespace Syntaxer
 
                 Output.WriteLine($" >> Server (v{Assembly.GetExecutingAssembly().GetName().Version}) Started (port={processArgs.port})");
                 new Engine().Preload();
+                SyntaxProvider.PreLoadServices();
                 Output.WriteLine($" >> Syntax engine loaded");
 
                 while (true)
