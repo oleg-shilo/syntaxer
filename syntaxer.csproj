@@ -38,9 +38,9 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Intellisense.Common, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Microsoft.CodeAnalysis, Version=2.6.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Roslyn.Intellisense\Intellisense.Common.dll</HintPath>
+      <HintPath>Roslyn\Microsoft.CodeAnalysis.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis.CSharp, Version=2.6.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -69,10 +69,6 @@
     <Reference Include="Microsoft.CodeAnalysis.Workspaces.Desktop, Version=2.6.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Roslyn\Microsoft.CodeAnalysis.Workspaces.Desktop.dll</HintPath>
-    </Reference>
-    <Reference Include="RoslynIntellisense, Version=1.1.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Roslyn.Intellisense\RoslynIntellisense.exe</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.AppContext, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
@@ -322,6 +318,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Roslyn.Intellisense\CSSRoslynProvider.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Roslyn.Intellisense\Intellisense.Interface\Intellisense.Common.csproj">
+      <Project>{c67d7ed7-f350-4fd4-81b5-5e635fb08765}</Project>
+      <Name>Intellisense.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="Roslyn.Intellisense\Roslyn.Intellisense\Roslyn.Intellisense.csproj">
+      <Project>{68062b6a-67e4-459d-9a42-97e798356c6e}</Project>
+      <Name>Roslyn.Intellisense</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

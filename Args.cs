@@ -31,6 +31,7 @@ namespace Syntaxer
         public int pid;
         public string pname;
         public string op;
+        public string context;
         public string cscs_path;
         public string[] inc;
         public int timeout = 5000;

@@ -66,7 +66,7 @@ namespace Syntaxer
                 string result = "";
 
                 if (args.op == "references")
-                    result = FindRefreneces(args.script, args.pos);
+                    result = FindRefreneces(args.script, args.pos, args.context);
                 else if (args.op.StartsWith("suggest_usings:"))
                     result = FindUsings(args.script, args.op.Split(':').Last(), args.rich);
                 else if (args.op == "resolve")
@@ -284,7 +284,7 @@ namespace Syntaxer
             catch { }
         }
 
-        internal static string FindRefreneces(string script, int offset)
+        internal static string FindRefreneces(string script, int offset, string context)
         {
             Output.WriteLine("FindRefreneces");
 
@@ -301,8 +301,19 @@ namespace Syntaxer
                                  .Select(f => new Tuple<string, string>(File.ReadAllText(f), f))
                                  .ToArray();
 
-            var regions = Autocompleter.FindReferences(code, offset, script, project.Refs, sources);
+            var regions = new List<string>();
+
+            if (context == "all")  // include definition and constructors
+            {
+                DomRegion[] refs = Autocompleter.GetSymbolSourceRefs(code, offset, script, project.Refs, sources);
+                foreach (var item in refs)
+                    regions.Add($"{item.FileName}({item.BeginLine},{item.BeginColumn}): ...");
+            }
+
+            regions.AddRange(Autocompleter.FindReferences(code, offset, script, project.Refs, sources));
+
             fullyLoaded = true;
+
             return regions.JoinBy("\n");
         }
 
@@ -778,6 +789,33 @@ class Script
             tes
             // var tup = (1,2);
         }
+    }
+}";
+
+        public static string testCodeClass = @"
+using System;
+
+class Script
+{
+    public Script()
+    {
+    }
+
+    public Script(string context)
+    {
+    }
+
+    public Script(int context)
+    {
+    }
+
+    static Script()
+    {
+    }
+
+    static public void Main()
+    {
+        var script = new Script();
     }
 }";
     }

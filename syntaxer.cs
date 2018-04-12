@@ -301,7 +301,6 @@ namespace Syntaxer
 
                 Output.WriteLine($" >> Server (v{Assembly.GetExecutingAssembly().GetName().Version}) Started (port={processArgs.port})");
                 new Engine().Preload();
-                SyntaxProvider.PreLoadServices();
                 Output.WriteLine($" >> Syntax engine loaded");
 
                 while (true)
@@ -363,10 +362,10 @@ namespace Syntaxer
         }
     }
 
-    public static class Services
+    public static class TestServices
     {
         // "references" - request
-        public static string FindRefreneces(string script, int offset) => SyntaxProvider.FindRefreneces(script, offset);
+        public static string FindRefreneces(string script, int offset, string context = null) => SyntaxProvider.FindRefreneces(script, offset, context);
 
         // "suggest_usings" - request
         public static string FindUsings(string script, string word) => SyntaxProvider.FindUsings(script, word, false);

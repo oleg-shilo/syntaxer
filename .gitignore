@@ -1,0 +1,17 @@
+.vs
+packages
+
+**/obj/Debug
+**/obj/Release
+**/obj/x64/Debug
+**/obj/x64/Release
+
+**/bin/obj
+**/bin/Debug
+**/bin/Release
+**/bin/x64/Debug
+**/bin/x64/Release
+
+*.suo
+*.user
+/push_to_plugins_sources.cmd

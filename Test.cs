@@ -23,7 +23,7 @@ namespace Syntaxer
         public static void All()
         {
             var trigegr_loadig_var = csscript.Cscs_asm;
-
+            Test.Renaming(); return;
             Test.Resolving();
             Test.Format();
             Test.Project();
@@ -130,7 +130,7 @@ namespace Syntaxer
                 var caret = code.IndexOf("info.ver") + "info.ver".Length;
                 string word = code.WordAt(caret);
 
-                var completions = Services.GetCompletion(script, caret);
+                var completions = TestServices.GetCompletion(script, caret);
 
                 Output.WriteLine("OK - " + completions.Count() + " completion item(s)...");
                 Output.WriteLine("    '" + completions.GetLines().FirstOrDefault(x => x.StartsWith(word)) + "'");
@@ -201,7 +201,7 @@ namespace Syntaxer
                 File.WriteAllText(script, code);
 
                 var caret = 5;
-                var info = Services.Resolve(script, caret);
+                var info = TestServices.Resolve(script, caret);
 
                 Output.WriteLine("OK");
             });
@@ -218,7 +218,7 @@ namespace Syntaxer
                 File.WriteAllText(script, code);
 
                 var caret = 13;
-                var info = Services.Resolve(script, caret);
+                var info = TestServices.Resolve(script, caret);
                 Output.WriteLine(info);
                 Output.WriteLine("OK");
             });
@@ -237,7 +237,7 @@ namespace Syntaxer
                 var caret = 13;
                 // var caret = 5;
 
-                string info = Services.GetTooltip(script, caret, null, true);
+                string info = TestServices.GetTooltip(script, caret, null, true);
                 Output.WriteLine(info);
                 Output.WriteLine("OK");
             });
@@ -259,7 +259,29 @@ namespace Syntaxer
                 var caret = code.IndexOf(pattern) + pattern.Length;
                 string word = code.WordAt(caret);
 
-                var region = Services.Resolve(script, caret);
+                var region = TestServices.Resolve(script, caret);
+
+                Output.WriteLine("OK - " + 1 + " symbol info item(s)...");
+                Output.WriteLine("    '" + region.GetLines().FirstOrDefault() + "'");
+            });
+        }
+
+        public static void Renaming()
+        {
+            TestScript(script =>
+            {
+                Output.WriteLine("---");
+                Output.Write("Generate renaming info: ");
+                string code = SyntaxProvider.testCodeClass;
+
+                File.WriteAllText(script, code);
+
+                var pattern = "class Scr";
+
+                var caret = code.IndexOf(pattern) + pattern.Length;
+                string word = code.WordAt(caret);
+
+                var region = TestServices.FindRefreneces(script, caret, "all");
 
                 Output.WriteLine("OK - " + 1 + " symbol info item(s)...");
                 Output.WriteLine("    '" + region.GetLines().FirstOrDefault() + "'");
@@ -282,7 +304,7 @@ namespace Syntaxer
                 var caret = code.IndexOf(pattern) + pattern.Length;
                 string word = code.WordAt(caret);
 
-                var tooltip = Services.GetTooltip(script, caret, null, true);
+                var tooltip = TestServices.GetTooltip(script, caret, null, true);
 
                 Output.WriteLine("OK");
                 Output.WriteLine("    '" + tooltip.GetLines().FirstOrDefault() + "'");
