@@ -17,6 +17,7 @@ namespace Syntaxer
         public bool exit;
         public bool test;
         public bool rich;
+        public bool doc;
         public bool dr; // deploy roslyn
         public string[] @ref;
         public string cmd;

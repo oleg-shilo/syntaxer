@@ -100,7 +100,7 @@ namespace Intellisense.Common
         }
     }
 
-    static class Utils
+    public static class Utils
     {
         public static string EscapeLB(this string data)
         {

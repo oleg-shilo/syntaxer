@@ -72,7 +72,7 @@ namespace Syntaxer
                 else if (args.op == "resolve")
                     result = Resolve(args.script, args.pos, args.rich);
                 else if (args.op == "completion")
-                    result = GetCompletion(args.script, args.pos);
+                    result = GetCompletion(args.script, args.pos, args.doc);
                 else if (args.op.StartsWith("tooltip:"))
                     result = GetTooltip(args.script, args.pos, args.op.Split(':').Last(), args.short_hinted_tooltips == 1);
                 else if (args.op.StartsWith("memberinfo"))
@@ -314,7 +314,7 @@ namespace Syntaxer
 
             fullyLoaded = true;
 
-            return regions.JoinBy("\n");
+            return regions.Distinct().JoinBy("\n");
         }
 
         internal static string FindUsings(string script, string word, bool rich_serialization)
@@ -468,7 +468,7 @@ namespace Syntaxer
             return null;
         }
 
-        internal static string GetCompletion(string script, int caret)
+        internal static string GetCompletion(string script, int caret, bool includDocumentation = false)
         {
             Output.WriteLine("GetCompletion");
 
@@ -479,6 +479,7 @@ namespace Syntaxer
                 string type = item.CompletionType.ToString().Replace("_event", "event").Replace("_namespace", "namespace");
                 string completion = item.CompletionText;
                 string display = item.DisplayText;
+                string documentation = item.Tag as string;
                 if (item.CompletionType == CompletionType.method)
                 {
                     if (item.HasOverloads)
@@ -501,7 +502,13 @@ namespace Syntaxer
                     }
                 }
 
-                result.AppendLine($"{display}\t{type}|{completion}");
+                var extra = "";
+                if (includDocumentation)
+                {
+                    extra = $"|{documentation.EscapeLB()}";
+                }
+
+                result.AppendLine($"{display}\t{type}|{completion}{extra}");
             }
 
             fullyLoaded = true;

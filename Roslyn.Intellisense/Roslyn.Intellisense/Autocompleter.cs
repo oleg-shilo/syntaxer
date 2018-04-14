@@ -634,7 +634,14 @@ namespace RoslynIntellisense
             var model = document.GetSemanticModelAsync().Result;
             var symbols = Recommender.GetRecommendedSymbolsAtPositionAsync(model, position, workspace).Result.ToArray();
 
-            var data = symbols.Select(s => s.ToCompletionData()).ToArray();
+            var data = symbols.Select(s =>
+            {
+                var completion = s.ToCompletionData();
+                var xmlDoc = s.GetDocumentationCommentXml();
+                if (xmlDoc.HasText())
+                    completion.Tag = xmlDoc.XmlToPlainText();
+                return completion;
+            }).ToArray();
 
             foreach (var group in data.GroupBy(x => x.DisplayText))
             {
