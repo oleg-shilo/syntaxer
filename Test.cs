@@ -23,11 +23,14 @@ namespace Syntaxer
         public static void All()
         {
             var trigegr_loadig_var = csscript.Cscs_asm;
-            Test.Renaming(); return;
+            // Test.SuggestUsings(); return;
+            //Test.CSS_SignatureHelp(); return;
+            // Test.Resolving();
+            Test.AssignmentCompletion(); return;
+            Test.Renaming();
             Test.Resolving();
             Test.Format();
             Test.Project();
-            Test.Completion();
             Test.Tooltip();
 
             // Test.CSSCompletion();
@@ -128,6 +131,33 @@ namespace Syntaxer
                 File.WriteAllText(script, code);
 
                 var caret = code.IndexOf("info.ver") + "info.ver".Length;
+                string word = code.WordAt(caret);
+
+                var completions = TestServices.GetCompletion(script, caret);
+
+                Output.WriteLine("OK - " + completions.Count() + " completion item(s)...");
+                Output.WriteLine("    '" + completions.GetLines().FirstOrDefault(x => x.StartsWith(word)) + "'");
+            });
+        }
+
+        public static void AssignmentCompletion()
+        {
+            TestScript(script =>
+            {
+                Output.WriteLine("---");
+                Console.Write("AssignmentCompletion: ");
+
+                string code = SyntaxProvider.testCode7b;
+
+                // System.IO.StreamReader file =
+
+                File.WriteAllText(script, code);
+
+                var pattern = "System.IO.StreamReader file =";
+                pattern = "f.DialogResult =";
+                pattern = "Form form =";
+                pattern = "Form form = new";
+                var caret = code.IndexOf(pattern) + pattern.Length;
                 string word = code.WordAt(caret);
 
                 var completions = TestServices.GetCompletion(script, caret);
@@ -255,6 +285,7 @@ namespace Syntaxer
 
                 var pattern = "Console.Write";
                 // pattern = "info.ver";
+                pattern = "System.IO.StreamReader fi";
 
                 var caret = code.IndexOf(pattern) + pattern.Length;
                 string word = code.WordAt(caret);
@@ -282,6 +313,64 @@ namespace Syntaxer
                 string word = code.WordAt(caret);
 
                 var region = TestServices.FindRefreneces(script, caret, "all");
+
+                Output.WriteLine("OK - " + 1 + " symbol info item(s)...");
+                Output.WriteLine("    '" + region.GetLines().FirstOrDefault() + "'");
+            });
+        }
+
+        public static void CSS_SignatureHelp()
+        {
+            TestScript(script =>
+            {
+                Output.WriteLine("---");
+                Output.Write("Generate signature help: ");
+                string code = @"using System;
+class Program
+{
+    static void Main(string[] args)
+    {
+        Console.WriteLine(
+    }
+}";
+
+                File.WriteAllText(script, code);
+
+                var pattern = "WriteLine(";
+
+                var caret = code.IndexOf(pattern) + pattern.Length;
+                string word = code.WordAt(caret);
+
+                var region = TestServices.GetSignatureHelp(script, caret);
+
+                Output.WriteLine("OK - " + 1 + " symbol info item(s)...");
+                Output.WriteLine("    '" + region.GetLines().FirstOrDefault() + "'");
+            });
+        }
+
+        public static void SuggestUsings()
+        {
+            TestScript(script =>
+            {
+                Output.WriteLine("---");
+                Output.Write("SuggestUsings: ");
+                string code = @"using System;
+class Program
+{
+    static void Main(string[] args)
+    {
+        File
+    }
+}";
+
+                File.WriteAllText(script, code);
+
+                var pattern = "File";
+
+                var caret = code.IndexOf(pattern) + pattern.Length;
+                string word = code.WordAt(caret);
+
+                var region = TestServices.FindUsings(script, "File");
 
                 Output.WriteLine("OK - " + 1 + " symbol info item(s)...");
                 Output.WriteLine("    '" + region.GetLines().FirstOrDefault() + "'");

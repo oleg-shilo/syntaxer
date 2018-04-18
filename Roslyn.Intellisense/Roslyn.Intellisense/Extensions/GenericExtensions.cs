@@ -207,9 +207,10 @@ namespace RoslynIntellisense
         }
 
         //XmlTextReader "crawling style" reader fits better the purpose than a "read it all at once" XDocument
-        public static string XmlToPlainText(this string xmlDoc, bool isReflectionDocument = false, bool ignoreExceptionsInfo = false)
+        public static string XmlToPlainText(this string xmlDoc, bool isReflectionDocument = false, bool ignoreExceptionsInfo = false, bool vsCodeEncoding = false)
         {
             //var root.XElement.Parse("<root>" + entity.Documentation.Xml.Text + "</root>");
+            if (!xmlDoc.HasText()) return "";
 
             var sections = new List<string>();
 
@@ -219,9 +220,10 @@ namespace RoslynIntellisense
                 using (var reader = new XmlTextReader(new StringReader("<root>" + xmlDoc + "</root>")))
                 {
                     string lastElementName = null;
-                    bool exceptionsStarted = false;
+                    var exceptionsStarted = false;
+                    var done = false;
                     reader.XmlResolver = null;
-                    while (reader.Read())
+                    while (reader.Read() && !done)
                     {
                         var nodeType = reader.NodeType;
                         switch (nodeType)
@@ -229,7 +231,10 @@ namespace RoslynIntellisense
                             case XmlNodeType.Text:
                                 if (lastElementName == "summary")
                                 {
-                                    b.Insert(0, reader.Value.Shrink());
+                                    if (vsCodeEncoding)
+                                        b.Insert(0, "doc:" + reader.Value.Shrink());
+                                    else
+                                        b.Insert(0, reader.Value.Shrink());
                                 }
                                 else
                                 {
@@ -243,7 +248,8 @@ namespace RoslynIntellisense
                                         //if (reflectionDocument)
                                         //    b.Append(reader.Value.NormalizeLines()); //need to preserve line breaks but not indents
                                         //else
-                                        b.Append(reader.Value.Shrink());
+                                        if (!(exceptionsStarted && ignoreExceptionsInfo))
+                                            b.Append(reader.Value.Shrink());
                                     }
                                 }
                                 break;
@@ -271,8 +277,18 @@ namespace RoslynIntellisense
 
                                         case "param":
                                             silentElement = true;
-                                            b.AppendLine();
-                                            b.Append(reader.GetAttribute("name") + ": ");
+                                            if (vsCodeEncoding)
+                                            {
+                                                if (b.Length > 0 && b[b.Length - 1] != '\n')
+                                                    b.AppendLine();
+                                                b.AppendLine("param_label:" + reader.GetAttribute("name"));
+                                                b.Append("param_doc:");
+                                            }
+                                            else
+                                            {
+                                                b.AppendLine();
+                                                b.Append(reader.GetAttribute("name") + ": ");
+                                            }
                                             break;
 
                                         case "para":
@@ -300,6 +316,8 @@ namespace RoslynIntellisense
                                                     b.Length = 0;
                                                     if (!ignoreExceptionsInfo)
                                                         b.AppendLine("Exceptions: ");
+                                                    else if (vsCodeEncoding)
+                                                        done = true;
                                                 }
                                                 exceptionsStarted = true;
 
@@ -368,6 +386,8 @@ namespace RoslynIntellisense
                 sections.Add(b.ToString().Trim());
 
                 string sectionSeparator = (isReflectionDocument ? "\r\n--------------------------\r\n" : "\r\n\r\n");
+                if (vsCodeEncoding)
+                    sectionSeparator = "\r\n";
                 return string.Join(sectionSeparator, sections.Where(x => !string.IsNullOrEmpty(x)).ToArray());
             }
             catch (XmlException)

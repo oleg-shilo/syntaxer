@@ -3,19 +3,10 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Net;
-using System.Net.Sockets;
-using System.Reflection;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using Intellisense.Common;
 using RoslynIntellisense;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.MSBuild;
-using System.Text.RegularExpressions;
 
 namespace Syntaxer
 {
@@ -77,6 +68,8 @@ namespace Syntaxer
                     result = GetTooltip(args.script, args.pos, args.op.Split(':').Last(), args.short_hinted_tooltips == 1);
                 else if (args.op.StartsWith("memberinfo"))
                     result = GetMemberInfo(args.script, args.pos, args.collapseOverloads);
+                else if (args.op.StartsWith("signaturehelp"))
+                    result = GetSignatureHelp(args.script, args.pos);
                 else if (args.op == "project")
                     result = GenerateProjectFor(args.script);
                 else if (args.op == "codemap")
@@ -505,7 +498,9 @@ namespace Syntaxer
                 var extra = "";
                 if (includDocumentation)
                 {
+                    // VSCode is the one that accepts the documentation
                     extra = $"|{documentation.EscapeLB()}";
+                    completion = completion.EscapeLB();
                 }
 
                 result.AppendLine($"{display}\t{type}|{completion}{extra}");
@@ -650,6 +645,33 @@ namespace Syntaxer
             return result;
         }
 
+        internal static string GetSignatureHelp(string script, int caret)
+        {
+            Output.WriteLine("GetSignatureHelp");
+
+            string result = null;
+            string code = File.ReadAllText(script);
+            if (code.IsEmpty())
+                throw new Exception("The file containing code is empty");
+
+            if (!script.EndsWith(".g.cs"))
+                CSScriptHelper.DecorateIfRequired(ref code, ref caret);
+
+            Project project = CSScriptHelper.GenerateProjectFor(script);
+            var sources = project.Files
+                                 .Where(f => f != script)
+                                 .Select(f => new Tuple<string, string>(File.ReadAllText(f), f))
+                                 .ToArray();
+
+            int bestMatchIndex;
+            var items = Autocompleter.GetMethodSignatures(code, caret, out bestMatchIndex, project.Refs, sources);
+
+            result = $"{bestMatchIndex}\r\n" + items.Select(x => x.EscapeLB())
+                                                    .JoinSerializedLines();
+
+            return result;
+        }
+
         internal static string GetMemberInfo(string script, int caret, bool collapseOverloads)
         {
             // Complete API for N++
@@ -750,6 +772,7 @@ class Script
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Windows.Forms;
 using static dbg; // to use 'print' instead of 'dbg.print'
 
 class Script
@@ -770,6 +793,12 @@ class Script
                             .Take(5));
 
         Console.WriteLine(777);
+
+        Form form = new
+
+        // Forms f = new Form();
+        // f.DialogResult =
+        // System.IO.StreamReader file =
     }
 }";
 

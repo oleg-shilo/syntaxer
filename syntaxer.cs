@@ -386,6 +386,10 @@ namespace Syntaxer
         public static string GetTooltip(string script, int offset, string hint, bool shortHintedTooltips)
             => SyntaxProvider.GetTooltip(script, offset, hint, shortHintedTooltips);
 
+        // "signaturehelp" - request
+        public static string GetSignatureHelp(string script, int offset)
+            => SyntaxProvider.GetSignatureHelp(script, offset);
+
         // "project" - request
         public static Project GenerateProjectFor(string script)
             => CSScriptHelper.GenerateProjectFor(script);

@@ -684,6 +684,51 @@ namespace RoslynIntellisense
             return symbolDoc;
         }
 
+        public static string ToSignatureInfo(this ISymbol symbol)
+        {
+            string symbolDoc = "";
+
+            switch (symbol.Kind)
+            {
+                case SymbolKind.Method:
+                    {
+                        var method = (symbol as IMethodSymbol);
+
+                        var returnType = method.ReturnType.ToMinimalString();
+
+                        var name = $"{method.ReceiverType.ToMinimalString()}.{method.Name}";
+                        if (method.TypeArguments.HasAny())
+                        {
+                            string prms = string.Join(", ", method.TypeArguments.Select(p => p.ToMinimalString()).ToArray());
+                            name = $"{name}<{prms}>";
+                        }
+
+                        var args = "()";
+                        if (method.Parameters.HasAny())
+                        {
+                            string prms = string.Join(", ", method.Parameters.Select(p => p.Type.ToMinimalString() + " " + p.Name).ToArray());
+                            args = $"({prms})";
+                        }
+                        if (method.IsConstructor())
+                            symbolDoc = $"label:{name}{args}";
+                        else
+                            symbolDoc = $"label:{returnType} {name}{args}";
+
+                        break;
+                    }
+                default:
+                    break;
+            }
+
+            // Console.WriteLine(
+            symbolDoc += "\r\n" + symbol.GetDocumentationCommentXml()
+                                        .XmlToPlainText(isReflectionDocument: false,
+                                                        ignoreExceptionsInfo: true,
+                                                        vsCodeEncoding: true);
+
+            return symbolDoc;
+        }
+
         public static ICompletionData ToCompletionData(this ISymbol symbol)
         {
             if (symbol.Kind == SymbolKind.Event ||

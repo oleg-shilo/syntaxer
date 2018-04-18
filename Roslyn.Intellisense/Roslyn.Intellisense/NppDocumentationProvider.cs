@@ -78,23 +78,22 @@ namespace RoslynIntellisense
 
         protected override string GetDocumentationForSymbol(string documentationMemberID, CultureInfo preferredCulture, CancellationToken cancellationToken = default(CancellationToken))
         {
-            string xml = "";
+            return GetXmlDocForSymbol(documentationMemberID)?.ToString() ?? "";
+        }
+
+        protected XElement GetXmlDocForSymbol(string documentationMemberID)
+        {
             try
             {
-                XDocument xmlFile = GetXmlDocumentationFile(module);
-                if (xmlFile != null)
-                {
-                    xml = xmlFile.Root.Element("members")
-                                      .Elements("member")
-                                      .Where(x => x.Attribute("name").Value == documentationMemberID)
-                                      .FirstOrDefault()?
-                                      .ToString();
-                }
+                return GetXmlDocumentationFile(module)?.Root
+                                                       .Element("members")
+                                                       .Elements("member")
+                                                       .Where(x => x.Attribute("name").Value == documentationMemberID)
+                                                       .FirstOrDefault();
             }
             catch { } //doc failures are not critical
 
-            return xml;
+            return null;
         }
     }
-
 }

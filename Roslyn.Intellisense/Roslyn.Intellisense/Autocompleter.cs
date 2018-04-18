@@ -133,7 +133,7 @@ namespace RoslynIntellisense
 
         static void GetWordFromCaret(string code, int position, out int logicalPosition, out string partialWord, out string opContext)
         {
-            //check if it is variable assignment or 'edd even' declaration
+            //check if it is variable assignment or 'add even' declaration
             if (position > 5) //you need at least a few chars to declare the event handler adding: a.b+=
             {
                 int start = Math.Max(0, position - 300);
@@ -145,7 +145,7 @@ namespace RoslynIntellisense
                     opContext = "-=";
                     //not supported
                 }
-                else if (leftSideText.EndsWith("=")) //it is 'add event' declaration: this.Load += |
+                else if (leftSideText.EndsWith("=") || leftSideText.EndsWith("=new") || leftSideText.EndsWith(" new")) //it is 'add event' declaration: this.Load += |
                 {
                     int pos = leftSide.LastIndexOf('='); //this.Load |+=
                     pos--;
@@ -157,7 +157,10 @@ namespace RoslynIntellisense
                     }
                     else
                     {
-                        opContext = "=";
+                        if (leftSideText.EndsWith("new"))
+                            opContext = "= new";
+                        else
+                            opContext = "=";
                     }
 
                     bool started = false;
@@ -174,7 +177,7 @@ namespace RoslynIntellisense
                     var startOfName = pos + 1;
 
                     partialWord = leftSide.Substring(startOfName).Split(Delimiters).FirstOrDefault();
-                    logicalPosition = startOfName + partialWord.Length;
+                    logicalPosition = startOfName + partialWord.Length + start;
                     return;
                 }
             }
@@ -408,6 +411,44 @@ namespace RoslynIntellisense
             return new string[0];
         }
 
+        public static IEnumerable<string> GetMethodSignatures(string code, int position, out int bestMatchIndex, string[] references = null, IEnumerable<Tuple<string, string>> includes = null)
+        {
+            // Debug.Assert(false);
+            bestMatchIndex = -1;
+
+            int actualPosition = position;
+
+            int pos = code.LastIndexOf('(', position - 1);
+            if (pos == -1)
+                return new string[0];
+
+            actualPosition = pos;
+
+            try
+            {
+                var result = new List<string>();
+
+                var workspace = new AdhocWorkspace();
+
+                var doc = InitWorkspace(workspace, code, null, AgregateRefs(references), includes);
+
+                var symbol = SymbolFinder.FindSymbolAtPositionAsync(doc, actualPosition).Result;
+
+                if (symbol != null)
+                {
+                    bestMatchIndex = 0;
+                    result.AddRange(symbol.GetOverloads().Select(s => s.ToSignatureInfo()));
+                    return result;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            // catch { } //failed, no need to report, as auto-completion is expected to fail sometimes
+            return new string[0];
+        }
+
         static IEnumerable<ISymbol> GetOverloads(this ISymbol symbol)
         {
             return symbol.ContainingType.GetMembers(symbol.Name).Where(x => x != symbol);
@@ -424,6 +465,51 @@ namespace RoslynIntellisense
             int logicalPosition;
 
             GetWordFromCaret(code, position, out logicalPosition, out partialWord, out opContext);
+
+            if (opContext == "=" || opContext == "= new")
+            {
+                try
+                {
+                    var workspace = new AdhocWorkspace();
+                    var doc = InitWorkspace(workspace, code, null, AgregateRefs(references), includes);
+
+                    ISymbol symbol = SymbolFinder.FindSymbolAtPositionAsync(doc, logicalPosition).Result;
+                    if (symbol != null)
+                    {
+                        //Microsoft.CodeAnalysis.CSharp.Symbols.SourceLocalSymbol.LocalWithInitializer
+                        try
+                        {
+                            var type = symbol.GetProp("Type"); // LocalWithInitializer is internal in Roslyn
+                            CompletionType compType = CompletionType.none;
+                            string initializationExpression = type.ToString();
+
+                            string typeNamespace = type.GetProp("ContainingNamespace")?.ToString();
+                            if (typeNamespace.HasText())
+                                initializationExpression = initializationExpression.Replace(typeNamespace + ".", "");
+
+                            if (opContext != "= new")
+                            {
+                                if (type.GetProp("IsReferenceType") is bool is_ref && is_ref)
+                                {
+                                    compType = CompletionType.constructor;
+                                    initializationExpression = $"new {initializationExpression}";
+                                }
+                            }
+
+                            return new[]{
+                                new CompletionData
+                                {
+                                    DisplayText = initializationExpression,
+                                    CompletionText = initializationExpression,
+                                    CompletionType = compType,
+                                    RawData = null
+                                }};
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+            }
 
             var completions = Resolve(code, logicalPosition, references, includes);
 
