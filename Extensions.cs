@@ -27,6 +27,175 @@ namespace Syntaxer
 
     public static class Utils
     {
+        static bool IsStringLiteral(this string text)
+        {
+            int start = text.IndexOf("@\"");
+
+            for (int i = start + "@\"".Length; i < text.Length; i++)
+            {
+                char currentChar = text[i];
+                if (currentChar == '"')
+                {
+                    char nextChar = ((i + 1) <= text.Length ? text[i + 1] : char.MinValue);
+                    if (nextChar == '"') // escaped " character
+                        i++;
+                    else
+                        return false; //string literal has been closed
+                }
+            }
+
+            return start != -1;
+        }
+
+        public static int ExpressionLastOpenBracket(this string text)
+        {
+            int openBracketCount = 0;
+            int openStringCount = 0;
+            int openCharCount = 0;
+            for (int i = text.Length - 1; i >= 0; i--)
+            {
+                char currentChar = text[i];
+                char leftChar = (i > 0 ? text[i - 1] : char.MinValue);
+
+                if (currentChar == '"')
+                {
+                    if (openStringCount > 0) //already opened string
+                    {
+                        if (leftChar != '\\')
+                            openStringCount--;
+                    }
+                    else
+                    {
+                        if (openStringCount == 0)
+                            openStringCount++;
+                    }
+                }
+                else if (currentChar == '\'')
+                {
+                    if (openCharCount > 0) //already opened char
+                    {
+                        if (leftChar != '\\')
+                            openCharCount--;
+                    }
+                    else
+                    {
+                        if (openCharCount == 0)
+                            openCharCount++;
+                    }
+                }
+                else if (openStringCount == 0 && openCharCount == 0) // non string or char expression
+                {
+                    if (currentChar == '(' && !IsStringLiteral(text.Substring(0, i)))
+                    {
+                        openBracketCount++;
+                        if (openBracketCount >= 1)
+                            return i;
+                    }
+                    else if (currentChar == ')' && !IsStringLiteral(text.Substring(0, i)))
+                        openBracketCount--;
+                }
+            }
+            return -1;
+        }
+
+        public static IEnumerable<string> ExpressionArguments(this string text)
+        {
+            // non-Roslyn simplistic signature parser
+            var args = new List<string>();
+
+            var position = text.ExpressionLastOpenBracket();
+            if (position != -1)
+            {
+                var code = text.Substring(position + 1);
+
+                // count comas
+                bool isOpenString = false;
+                bool isOpenChar = false;
+                bool isOpenStringLiteral = false;
+                bool isOpenAngeBracket = false;
+
+                var arg = new StringBuilder();
+                for (int i = 0; i < code.Length; i++)
+                {
+                    char currentChar = code[i];
+                    char prevChar = (i > 0 ? code[i - 1] : char.MinValue);
+                    char nextChar = ((i + 1) < code.Length ? code[i + 1] : char.MinValue);
+
+                    arg.Append(currentChar);
+
+                    if (isOpenString)
+                    {
+                        if (currentChar == '"')
+                        {
+                            if (prevChar != '\\') // it is not an escaped "-char
+                                isOpenString = false;
+                        }
+                        continue;
+                    }
+
+                    if (isOpenChar)
+                    {
+                        if (currentChar == '\'')
+                        {
+                            if (prevChar != '\\') // it is not an escaped '-char
+                                isOpenChar = false;
+                        }
+                        continue;
+                    }
+
+                    if (isOpenStringLiteral)
+                    {
+                        if (currentChar == '"')
+                        {
+                            if (nextChar == '"') // it is an escaped "-char
+                                i++;
+                            else
+                                isOpenChar = false;
+                        }
+                        continue;
+                    }
+
+                    if (isOpenAngeBracket)
+                    {
+                        if (currentChar == '>')
+                        {
+                            isOpenAngeBracket = false;
+                        }
+                        continue;
+                    }
+
+                    // it is a raw expression content
+
+                    if (currentChar == '<')
+                    {
+                        isOpenAngeBracket = true;
+                    }
+                    else if (currentChar == '"')
+                    {
+                        isOpenString = true;
+                    }
+                    else if (currentChar == '\'')
+                    {
+                        isOpenChar = true;
+                    }
+                    else if (currentChar == '@' && nextChar == '"')
+                    {
+                        isOpenStringLiteral = true;
+                        i++;
+                    }
+                    else if (currentChar == ',')
+                    {
+                        // and of argument
+                        arg.Length--;
+                        args.Add(arg.ToString());
+                        arg.Length = 0;
+                    }
+                }
+            }
+
+            return args;
+        }
+
         public static string NormalizeLineEnding(this string text)
         {
             //sublime operates with '\n' when counts caret position even on windows

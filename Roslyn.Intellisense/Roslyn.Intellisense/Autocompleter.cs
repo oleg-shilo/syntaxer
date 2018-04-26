@@ -411,18 +411,20 @@ namespace RoslynIntellisense
             return new string[0];
         }
 
-        public static IEnumerable<string> GetMethodSignatures(string code, int position, out int bestMatchIndex, string[] references = null, IEnumerable<Tuple<string, string>> includes = null)
+        public static IEnumerable<string> GetMethodSignatures(string code, int position, out string bestMatchIndex, string[] references = null, IEnumerable<Tuple<string, string>> includes = null)
         {
             // Debug.Assert(false);
-            bestMatchIndex = -1;
+            bestMatchIndex = "0/-1";
 
             int actualPosition = position;
 
-            int pos = code.LastIndexOf('(', position - 1);
-            if (pos == -1)
+            InvocationExpressionSyntax invocation = GetInvokExpression(code, position);
+            if (invocation == null)
                 return new string[0];
 
-            actualPosition = pos;
+            // Console.WriteLine(1,"3",
+            actualPosition = invocation.Expression.FullSpan.End; // Console.WriteLine
+            var args = invocation.ArgumentList.Arguments.ToArray(); // (1,"3",
 
             try
             {
@@ -432,12 +434,25 @@ namespace RoslynIntellisense
 
                 var doc = InitWorkspace(workspace, code, null, AgregateRefs(references), includes);
 
-                var symbol = SymbolFinder.FindSymbolAtPositionAsync(doc, actualPosition).Result;
+                var symbol = SymbolFinder.FindSymbolAtPositionAsync(doc, actualPosition).Result as IMethodSymbol;
 
                 if (symbol != null)
                 {
-                    bestMatchIndex = 0;
-                    result.AddRange(symbol.GetOverloads().Select(s => s.ToSignatureInfo()));
+                    bestMatchIndex = "0/-1"; // not implemented yet
+
+                    var overloads = symbol.GetOverloads()
+                                          .Concat(new[] { symbol })
+                                          .OfType<IMethodSymbol>()
+                                          .OrderBy(x => x.Parameters.Count());
+
+                    result.AddRange(overloads.Select(s => s.ToSignatureInfo()));
+
+                    if (overloads.Count() > 1)
+                    {
+                        var index = overloads.ToList().IndexOf(symbol);
+                        bestMatchIndex = $"{index}/{args.Length - 1}";
+                    }
+
                     return result;
                 }
             }
@@ -911,6 +926,37 @@ namespace RoslynIntellisense
             }
 
             return map.ToArray();
+        }
+
+        public static InvocationExpressionSyntax GetInvokExpression(string code, int position)
+        {
+            SyntaxTree tree = CSharpSyntaxTree.ParseText(code);
+
+            var root = tree.GetRoot();
+
+            var nodes = root.DescendantNodes();
+
+            var invocationAtCursor = nodes.Where(x => x.Kind() == SyntaxKind.ArgumentList && x.FullSpan.End >= position)
+                                         .Select(x => new
+                                         {
+                                             Distance = x.FullSpan.End - position,
+                                             Size = x.FullSpan.End - x.FullSpan.Start,
+                                             Data = x,
+                                             PaeentTrivia = x.Parent as InvocationExpressionSyntax
+                                         })
+                                         .OrderBy(x => x.Distance)
+                                         .ThenBy(x => x.Size)
+                                         .Select(x => x.Data)
+                                         .FirstOrDefault();
+
+            if (invocationAtCursor?.Parent is InvocationExpressionSyntax invocation)
+            {
+                // var expression = invocation.Expression;
+                // var expressionArgs = invocation.ArgumentList.Arguments;
+                return invocation;
+            }
+            else
+                return null;
         }
 
         static CodeMapItem[] GetMapOfVB(string code, bool decorated)

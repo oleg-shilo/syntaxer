@@ -40,6 +40,33 @@ namespace RoslynIntellisense
             }
         }
 
+        public static string ResolveSymbolToTypeName(this ArgumentSyntax arg, Document doc)
+        {
+            string arg_text = arg.ToString();
+
+            if (arg_text.IsString()) return "string";
+            else if (arg_text.IsChar()) return "char";
+            else if (arg_text.IsChar()) return "char";
+            else if (arg_text.IsFloat()) return "float";
+            else if (arg_text.IsDecimal()) return "decimal";
+            else if (arg_text.IsDouble()) return "double";
+            else if (arg_text.IsByte()) return "byte";
+            else if (arg_text.IsLong()) return "long";
+            else if (arg_text.IsSbyte()) return "sbyte";
+            else if (arg_text.IsShort()) return "short";
+            else if (arg_text.IsUlong()) return "ulong";
+            else if (arg_text.IsInt()) return "int";
+            else if (arg_text.IsBool()) return "bool";
+
+            // if (arg_text.All(c => char.Is c.IsN "'") && arg_text.EndsWith("\'"))
+            // {
+            //     return "char";
+            // }
+            //     var pos = arg.FullSpan.End - 1;
+            //     var arg_type = SymbolFinder.FindSymbolAtPositionAsync(doc, pos).Result;
+            return "";
+        }
+
         public static string ToDecoratedName(this ITypeSymbol type)
         {
             string result = type.ToDisplayString();
@@ -813,5 +840,97 @@ namespace RoslynIntellisense
                                       partial,
                                       StringComparison.OrdinalIgnoreCase) == 0;
         }
+    }
+
+    /// <summary>
+    /// Ironically Roslyn does not support parsing primitives.
+    /// Thus need to use this very simplistic parser.
+    /// In the future will need to be extended with dynamic
+    /// type detection:
+    /// 0x2340 - int
+    /// 0x23402345 - long
+    /// </summary>
+    internal static class Primitives
+    {
+        // does not do the length of digits sequence checking
+
+        public static bool HasFloatSuffix(this string text) => text.EndsWith("f", StringComparison.OrdinalIgnoreCase);
+
+        public static bool HasDoubleSuffix(this string text) => text.EndsWith("d", StringComparison.OrdinalIgnoreCase);
+
+        public static bool HasDecimalSuffix(this string text) => text.EndsWith("m", StringComparison.OrdinalIgnoreCase);
+
+        public static string DeflateNumber(this string text) => text.Replace("_", "").Replace("+", "").Replace("-", "");
+
+        public static bool EndsWithDigit(this string text) => char.IsDigit(text.Last());
+
+        public static bool IsNumeric(this string text) =>
+            text.Length > 0
+            && !text.StartsWith("'") && !text.StartsWith("\"") && !text.StartsWith("@\"") && !text.StartsWith("$\"") && !text.StartsWith("$@\"")
+            && ((text.StartsWith("0x") || text.StartsWith("0b"))
+                ||
+                (text.Where(x => x != '_' && x != '+' && x != '-').All(char.IsDigit)));
+
+        public static bool IsFloat(this string text) =>
+            text.Length > 0 &&
+            (text.StartsWith("(float)")
+            ||
+             text.Substring(0, text.Length - 1).Replace(".", "").IsNumeric() &&
+             text.HasFloatSuffix());
+
+        public static bool IsDecimal(this string text) =>
+            text.Length > 0 &&
+            (text.StartsWith("(decimal)")
+            ||
+             text.Substring(0, text.Length - 1).Replace(".", "").IsNumeric() &&
+             text.HasDecimalSuffix());
+
+        public static bool IsDouble(this string text) =>
+            text.Length > 0 &&
+            (text.StartsWith("(double)")
+            ||
+             text.Substring(0, text.Length - 1).Replace(".", "").IsNumeric() &&
+             ((text.Contains(".") && text.EndsWithDigit()) ||
+               text.HasDoubleSuffix()));
+
+        public static bool IsByte(this string text) =>
+            text.Length > 0 &&
+            (text.IsNumeric() && text.StartsWith("(byte)"));
+
+        public static bool IsChar(this string text) =>
+            text.Length > 0 &&
+            (text.StartsWith("'") || text.StartsWith("(char)")); // may be incomplete
+
+        //((text.StartsWith("'") && text.EndsWith("'")) || text.StartsWith("(char)"));
+
+        public static bool IsLong(this string text) =>
+           text.Length > 0 &&
+           text.IsNumeric() &&
+           (text.StartsWith("(long)") || text.EndsWith("l", StringComparison.OrdinalIgnoreCase));
+
+        public static bool IsSbyte(this string text) =>
+           text.Length > 0 &&
+           text.IsNumeric() &&
+           text.StartsWith("(sbyte)");
+
+        public static bool IsShort(this string text) =>
+           text.Length > 0 &&
+           text.IsNumeric() &&
+           text.StartsWith("(short)");
+
+        public static bool IsUlong(this string text) =>
+          text.Length > 0 &&
+          text.IsNumeric() &&
+          text.StartsWith("(ulong)");
+
+        public static bool IsInt(this string text) =>
+            text.Length > 0 &&
+            (text.IsNumeric() || text.StartsWith("(int)"));
+
+        public static bool IsBool(this string text) => (text == "true" || text == "false" || text.StartsWith("(bool)"));
+
+        public static bool IsString(this string text) =>
+            text.Length > 0
+            && (text.StartsWith("\"") || text.StartsWith("@\"") || text.StartsWith("$\"") || text.StartsWith("$@\"")); // the string may not be completed
     }
 }

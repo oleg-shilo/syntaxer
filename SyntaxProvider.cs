@@ -663,7 +663,7 @@ namespace Syntaxer
                                  .Select(f => new Tuple<string, string>(File.ReadAllText(f), f))
                                  .ToArray();
 
-            int bestMatchIndex;
+            string bestMatchIndex;
             var items = Autocompleter.GetMethodSignatures(code, caret, out bestMatchIndex, project.Refs, sources);
 
             result = $"{bestMatchIndex}\r\n" + items.Select(x => x.EscapeLB())

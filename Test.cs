@@ -1,20 +1,9 @@
 using System;
 using System.Linq;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Net;
-using System.Net.Sockets;
 using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using Intellisense.Common;
 using RoslynIntellisense;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.MSBuild;
 
 namespace Syntaxer
 {
@@ -24,14 +13,13 @@ namespace Syntaxer
         {
             var trigegr_loadig_var = csscript.Cscs_asm;
             // Test.SuggestUsings(); return;
-            //Test.CSS_SignatureHelp(); return;
+            Test.SignatureHelp(); return;
             // Test.Resolving();
-            Test.AssignmentCompletion(); return;
-            Test.Renaming();
-            Test.Resolving();
-            Test.Format();
-            Test.Project();
-            Test.Tooltip();
+            // Test.AssignmentCompletion(); return;
+            // Test.Renaming();
+            // Test.Format();
+            // Test.Project();
+            // Test.Tooltip();
 
             // Test.CSSCompletion();
             // Test.CSSResolving();
@@ -319,7 +307,7 @@ namespace Syntaxer
             });
         }
 
-        public static void CSS_SignatureHelp()
+        public static void SignatureHelp()
         {
             TestScript(script =>
             {
@@ -330,13 +318,16 @@ class Program
 {
     static void Main(string[] args)
     {
-        Console.WriteLine(
+        Console.WriteLine(22
+        // Console.WriteLine(5.ToString(), 33,
     }
 }";
+                // Console.WriteLine(22,
 
                 File.WriteAllText(script, code);
 
-                var pattern = "WriteLine(";
+                // var pattern = "WriteLine(";
+                var pattern = "22";
 
                 var caret = code.IndexOf(pattern) + pattern.Length;
                 string word = code.WordAt(caret);
