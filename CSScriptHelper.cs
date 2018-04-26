@@ -324,15 +324,19 @@ namespace Syntaxer
             bool isAutoClassSupported = false;
             try
             {
-                var xml = XDocument.Load(GetCSSConfig());
+                var file = GetCSSConfig();
+                if (File.Exists(file))
+                {
+                    var xml = XDocument.Load(file);
 
-                string[] defaultArgs = xml.Root.Descendants("defaultArguments")
-                                               .First()
-                                               .Value
-                                               .Split(' ');
+                    string[] defaultArgs = xml.Root.Descendants("defaultArguments")
+                                                   .First()
+                                                   .Value
+                                                   .Split(' ');
 
-                if (defaultArgs.Contains("-ac") || defaultArgs.Contains("-autoclass"))
-                    isAutoClassSupported = true;
+                    if (defaultArgs.Contains("-ac") || defaultArgs.Contains("-autoclass"))
+                        isAutoClassSupported = true;
+                }
             }
             catch { }
 

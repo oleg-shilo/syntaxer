@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using RoslynIntellisense;
 using Microsoft.CodeAnalysis;
+using Intellisense.Common;
 
 //using csscript;
 
@@ -42,12 +43,6 @@ namespace Syntaxer
 
         static void Main(string[] args)
         {
-            var isInt = int.TryParse("123", out int n);
-            var isFloat = float.TryParse("123f", out float f);
-            var isDouble = double.TryParse("123d", out double d);
-            var isDouble2 = double.TryParse("123f", out double d2);
-            var isFloat2 = float.TryParse("123d", out f);
-
             // Debug.Assert(false);
             DeployCSScriptIntegration();
 

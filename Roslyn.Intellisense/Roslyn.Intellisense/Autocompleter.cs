@@ -424,7 +424,7 @@ namespace RoslynIntellisense
 
             // Console.WriteLine(1,"3",
             actualPosition = invocation.Expression.FullSpan.End; // Console.WriteLine
-            var args = invocation.ArgumentList.Arguments.ToArray(); // (1,"3",
+            var args = invocation.ArgumentList.Arguments.ToList(); // (1,"3",
 
             try
             {
@@ -450,7 +450,11 @@ namespace RoslynIntellisense
                     if (overloads.Count() > 1)
                     {
                         var index = overloads.ToList().IndexOf(symbol);
-                        bestMatchIndex = $"{index}/{args.Length - 1}";
+                        var bestParamMatch = args.Count - 1;
+                        var argAtCursor = args.Where(x => x.FullSpan.Start <= position && position <= x.FullSpan.End).FirstOrDefault();
+                        if (argAtCursor != null)
+                            bestParamMatch = args.IndexOf(argAtCursor);
+                        bestMatchIndex = $"{index}/{bestParamMatch}";
                     }
 
                     return result;

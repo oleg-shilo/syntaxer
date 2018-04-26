@@ -7,6 +7,7 @@ using System.Text;
 using Intellisense.Common;
 using RoslynIntellisense;
 using Microsoft.CodeAnalysis;
+using System.Threading;
 
 namespace Syntaxer
 {
@@ -566,6 +567,7 @@ namespace Syntaxer
             //Console.WriteLine("hint: " + hint);
 
             string result = null;
+            "".EscapeLB();
             string code = File.ReadAllText(script);
             if (code.IsEmpty())
                 throw new Exception("The file containing code is empty");
@@ -643,6 +645,28 @@ namespace Syntaxer
                 result = result.NormalizeLineEnding().Replace("\r\n\r\n", "\r\n").TrimEnd();
 
             return result;
+        }
+
+        static string ReadAllText(string file)
+        {
+            // Retrying for reading source file which may be locked by VSCode
+            int attempts = 0;
+            try
+            {
+                attempts++;
+                return File.ReadAllText(file);
+            }
+            catch (Exception)
+            {
+                Thread.Sleep(200);
+                if (attempts > 3)
+                    throw;
+            }
+
+            // The next line will never be called.
+            // It's here just to satisfy the compiler.
+            // Caching 'Exception e' may alter the trace stack so throwing directly from catch clause.
+            throw new Exception($"Cannot read '{file}'");
         }
 
         internal static string GetSignatureHelp(string script, int caret)
