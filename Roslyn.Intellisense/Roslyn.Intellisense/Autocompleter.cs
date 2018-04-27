@@ -366,6 +366,12 @@ namespace RoslynIntellisense
             return asms;
         }
 
+        public static void Load()
+        {
+            string code = @"using System; class Script { static void Main(string[] args) { } }";
+            Autocompleter.GetMemberInfo(code, 0, out int t);
+        }
+
         public static IEnumerable<string> GetMemberInfo(string code, int position, out int methodStartPos, string[] references = null, IEnumerable<Tuple<string, string>> includes = null, bool includeOverloads = false)
         {
             // Debug.Assert(false);

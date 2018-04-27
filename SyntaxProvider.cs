@@ -49,6 +49,19 @@ namespace Syntaxer
                     return null;
                 }
 
+                if (args.op == "ping")
+                {
+                    try
+                    {
+                        Autocompleter.Load();
+                        return "ready";
+                    }
+                    catch
+                    {
+                        return "not ready";
+                    }
+                }
+
                 if (!File.Exists(args.script))
                     if (args.script.HasText())
                         return $"<error>File '{args.script}' doesn't exist";
