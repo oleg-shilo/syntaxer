@@ -98,7 +98,7 @@ namespace Syntaxer
                 Output.WriteLine("---");
                 Output.WriteLine("Generating project: ");
 
-                Project project = CSScriptHelper.GenerateProjectFor(script);
+                Project project = CSScriptHelper.GenerateProjectFor(new SourceInfo(script));
                 project.Files.ToList().ForEach(x => Output.WriteLine("    file: " + x));
                 project.Refs.ToList().ForEach(x => Output.WriteLine("    ref: " + x));
                 project.SearchDirs.ToList().ForEach(x => Output.WriteLine("    searchDir: " + x));

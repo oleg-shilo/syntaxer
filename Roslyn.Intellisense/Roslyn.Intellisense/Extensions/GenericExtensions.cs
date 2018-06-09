@@ -110,6 +110,11 @@ namespace RoslynIntellisense
             return Path.GetDirectoryName(path);
         }
 
+        public static string GetFileExtension(this string path)
+        {
+            return Path.GetExtension(path);
+        }
+
         public static string JoinBy(this IEnumerable<string> items, string separator = "")
         {
             return string.Join(separator, items.ToArray());

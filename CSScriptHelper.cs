@@ -223,7 +223,47 @@ namespace Syntaxer
 
     static class CSScriptHelper
     {
-        static public Project GenerateProjectFor(string script)
+        static public Project GenerateProjectFor(SourceInfo script)
+        {
+            if (script.File == script.RawFile)
+            {
+                return Project.GenerateProjectFor(script.File);
+            }
+            else
+            {
+                // The input file is not the actual script file.
+                // For example the script file in the editor is modified but unsaved and teh editor
+                // uses temp file for intellisense. 
+                var tempFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + script.File.GetFileExtension());
+                try
+                {
+                    var dir_instruction = "//css_dir " + script.File.GetDirName();
+
+                    File.WriteAllText(tempFile, dir_instruction + Environment.NewLine + script.Content);
+                    var project = Project.GenerateProjectFor(tempFile);
+
+                    project.Script = script.File;
+
+                    var files = project.Files.ToList();
+                    files.Remove(tempFile);
+                    files.Insert(0, script.File);
+                    project.Files = files.ToArray();
+
+                    var dirs = project.SearchDirs.ToList();
+                    dirs.Remove(tempFile.GetDirName());
+                    project.SearchDirs = dirs.ToArray();
+
+                    return project;
+                }
+                finally
+                {
+                    if(File.Exists(tempFile))
+                        try { File.Delete(tempFile); } catch { }
+                }
+            }
+        }
+
+        static Project GenerateProjectFor(string script)
         {
             return Project.GenerateProjectFor(script);
         }

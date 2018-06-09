@@ -9,6 +9,33 @@ using System.Text;
 
 namespace Syntaxer
 {
+    internal class SourceInfo
+    {
+        static char[] lineDelimiters = new [] { '\n' };
+
+        public SourceInfo(string file)
+        {
+            RawFile = file;
+            File = file;
+            Content = System.IO.File.ReadAllText(file);
+
+            // Example: "//css_syntaxer source:C:\dev\script.cs"
+            if (Content.StartsWith("//css_syntaxer source:"))
+            {
+                var parts = Content.Split(lineDelimiters, 2);
+                if (parts.Count() == 2)
+                {
+                    RawFile = file;
+                    File = parts[0].Trim().Replace("//css_syntaxer source:", "");
+                    Content = parts[1];
+                }
+            }
+        }
+        public string RawFile;
+        public string File;
+        public string Content;
+    }
+
     // There is NodeLabelEditEventArgs warranty that `Console.WriteLine` is always a safe call.
     // Particularly because the code is to be run on various OS and runtimes.
     // Thus accessing Console.Encoding on Windows from WinForm app raises the exception

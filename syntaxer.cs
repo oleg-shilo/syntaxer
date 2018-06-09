@@ -393,7 +393,7 @@ namespace Syntaxer
 
         // "project" - request
         public static Project GenerateProjectFor(string script)
-            => CSScriptHelper.GenerateProjectFor(script);
+            => CSScriptHelper.GenerateProjectFor(new SourceInfo(script));
 
         // "codemap" - request
         public static string GetCodeMap(string script)

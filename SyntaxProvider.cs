@@ -142,7 +142,7 @@ namespace Syntaxer
                                         ("//css_reference", ".dll|.exe"));
         }
 
-        internal static bool ParseAsCssDirective(string script, string code, int offset, Action<string> onDirective, Action<string, string, string> onDirectiveArg, bool ignoreEmptyArgs = true)
+        internal static bool ParseAsCssDirective(string code, int offset, Action<string> onDirective, Action<string, string, string> onDirectiveArg, bool ignoreEmptyArgs = true)
         {
             string word = code.WordAt(offset, true);
             string line = code.LineAt(offset);
@@ -179,7 +179,7 @@ namespace Syntaxer
             return false;
         }
 
-        internal static string LookopDirectivePath(string script, int offset, string directive, string word, string extensions = null)
+        internal static string LookopDirectivePath(SourceInfo script, int offset, string directive, string word, string extensions = null)
         {
             extensions = extensions ?? GetAssociatedFileExtensions(directive);
 
@@ -194,13 +194,13 @@ namespace Syntaxer
                                                 {
                                                     if (Directory.Exists(dir))
                                                         return Directory.GetFiles(dir, "*")
-                                                                                        .FirstOrDefault(file =>
-                                                                                        {
-                                                                                            return Path.GetFileName(file).IsSameAs(word, ignoreCase)
-                                                                                                           ||
-                                                                                                          (Path.GetFileNameWithoutExtension(file).IsSameAs(word, ignoreCase) &&
-                                                                                                           extensions.Contains(Path.GetExtension(file)));
-                                                                                        });
+                                                                        .FirstOrDefault(file =>
+                                                                         {
+                                                                             return Path.GetFileName(file).IsSameAs(word, ignoreCase)
+                                                                                            ||
+                                                                                           (Path.GetFileNameWithoutExtension(file).IsSameAs(word, ignoreCase) &&
+                                                                                            extensions.Contains(Path.GetExtension(file)));
+                                                                         });
                                                     else return null;
                                                 })
                                         .FirstOrDefault(x => x != null);
@@ -210,33 +210,31 @@ namespace Syntaxer
             return null;
         }
 
-        internal static string[] LookupDirectivePaths(string script, int offset, string directive, string word, string extensions)
+        internal static string[] LookupDirectivePaths(SourceInfo script, int offset, string directive, string word, string extensions)
         {
             if (extensions != null)
             {
-                var originalFile = script.Replace(".$temp$.", "."); // it may be temp file
                 return CSScriptHelper.GenerateProjectFor(script)
-                                            .SearchDirs
-                                            .Where(dir => Directory.Exists(dir))
-                                            .SelectMany(dir => extensions.Split('|').Select(x => new { ProbingDir = dir, FileExtension = x }))
-                                            .SelectMany(x => Directory.GetFiles(x.ProbingDir, "*" + x.FileExtension))
-                                            .Where(x => !x.Contains(".$temp$.") && // exclude all temp files
-                                                         x != originalFile)
-                                            .ToArray();
+                                     .SearchDirs
+                                     .Where(dir => Directory.Exists(dir))
+                                     .SelectMany(dir => extensions.Split('|').Select(x => new { ProbingDir = dir, FileExtension = x }))
+                                     .SelectMany(x => Directory.GetFiles(x.ProbingDir, "*" + x.FileExtension))
+                                     .Where(x => x != script.File)
+                                     .ToArray();
             }
             return new string[0];
         }
 
-        internal static DomRegion ResolveRaw(string script, int offset)
+        internal static DomRegion ResolveRaw(string scriptFile, int offset)
         {
-            string code = File.ReadAllText(script);
+            var script = new SourceInfo(scriptFile);
 
-            if (code.IsEmpty())
+            if (script.Content.IsEmpty())
                 throw new Exception("The file containing code is empty");
 
             DomRegion region = DomRegion.Empty;
 
-            ParseAsCssDirective(script, code, offset,
+            ParseAsCssDirective(script.Content, offset,
                 directive =>
                 {
                     region = CssSyntax.Resolve(directive);
@@ -259,18 +257,18 @@ namespace Syntaxer
             if (region.IsEmpty)
             {
                 bool decorated = false;
-                if (!script.EndsWith(".g.cs"))
-                    decorated = CSScriptHelper.DecorateIfRequired(ref code, ref offset);
+                if (!script.RawFile.EndsWith(".g.cs"))
+                    decorated = CSScriptHelper.DecorateIfRequired(ref script.Content, ref offset);
 
                 Project project = CSScriptHelper.GenerateProjectFor(script);
                 var sources = project.Files
-                                     .Where(f => f != script)
+                                     .Where(f => f != project.Script)
                                      .Select(f => new Tuple<string, string>(File.ReadAllText(f), f))
                                      .ToArray();
 
-                region = Autocompleter.ResolveSymbol(code, offset, script, project.Refs, sources);
-                if (decorated && region.FileName == script)
-                    CSScriptHelper.Undecorate(code, ref region);
+                region = Autocompleter.ResolveSymbol(script.Content, offset, script.File, project.Refs, sources);
+                if (decorated && region.FileName == script.File)
+                    CSScriptHelper.Undecorate(script.Content, ref region);
             }
 
             return region;
@@ -291,20 +289,21 @@ namespace Syntaxer
             catch { }
         }
 
-        internal static string FindRefreneces(string script, int offset, string context)
+        internal static string FindRefreneces(string scriptFile, int offset, string context)
         {
             Output.WriteLine("FindRefreneces");
 
-            string code = File.ReadAllText(script);
-            if (code.IsEmpty())
+            var script = new SourceInfo(scriptFile);
+
+            if (script.Content.IsEmpty())
                 throw new Exception("The file containing code is empty");
 
-            if (!script.EndsWith(".g.cs"))
-                CSScriptHelper.DecorateIfRequired(ref code, ref offset);
+            if (!script.RawFile.EndsWith(".g.cs"))
+                CSScriptHelper.DecorateIfRequired(ref script.Content, ref offset);
 
             Project project = CSScriptHelper.GenerateProjectFor(script);
             var sources = project.Files
-                                 .Where(f => f != script)
+                                 .Where(f => f != project.Script)
                                  .Select(f => new Tuple<string, string>(File.ReadAllText(f), f))
                                  .ToArray();
 
@@ -312,31 +311,33 @@ namespace Syntaxer
 
             if (context == "all")  // include definition and constructors
             {
-                DomRegion[] refs = Autocompleter.GetSymbolSourceRefs(code, offset, script, project.Refs, sources);
+                DomRegion[] refs = Autocompleter.GetSymbolSourceRefs(script.Content, offset, script.File, project.Refs, sources);
                 foreach (var item in refs)
                     regions.Add($"{item.FileName}({item.BeginLine},{item.BeginColumn}): ...");
             }
 
-            regions.AddRange(Autocompleter.FindReferences(code, offset, script, project.Refs, sources));
+            regions.AddRange(Autocompleter.FindReferences(script.Content, offset, script.File, project.Refs, sources));
 
             fullyLoaded = true;
 
             return regions.Distinct().JoinBy("\n");
         }
 
-        internal static string FindUsings(string script, string word, bool rich_serialization)
+        internal static string FindUsings(string scriptFile, string word, bool rich_serialization)
         {
             Output.WriteLine("FindUsings");
-            string code = File.ReadAllText(script);
-            if (code.IsEmpty())
+
+            var script = new SourceInfo(scriptFile);
+
+            if (script.Content.IsEmpty())
                 throw new Exception("The file containing code is empty");
 
             Project project = CSScriptHelper.GenerateProjectFor(script);
             var sources = project.Files
-                                 .Where(f => f != script)
+                                 .Where(f => f != project.Script)
                                  .Select(f => new Tuple<string, string>(File.ReadAllText(f), f));
 
-            var regions = Autocompleter.GetNamespacesFor(code, word, project.Refs, sources);
+            var regions = Autocompleter.GetNamespacesFor(script.Content, word, project.Refs, sources);
 
             fullyLoaded = true;
 
@@ -526,16 +527,16 @@ namespace Syntaxer
             return result.ToString().Trim();
         }
 
-        internal static IEnumerable<ICompletionData> GetCompletionRaw(string script, int caret)
+        internal static IEnumerable<ICompletionData> GetCompletionRaw(string scriptFile, int caret)
         {
-            string code = File.ReadAllText(script);
+            var script = new SourceInfo(scriptFile);
 
-            if (code.IsEmpty())
+            if (script.Content.IsEmpty())
                 throw new Exception("The file containing code is empty");
 
             IEnumerable<ICompletionData> completions = null;
 
-            bool wasHandled = ParseAsCssDirective(script, code, caret,
+            bool wasHandled = ParseAsCssDirective(script.Content, caret,
               (directive) =>
               {
                   completions = CssCompletionData.AllDirectives;
@@ -555,16 +556,16 @@ namespace Syntaxer
 
             if (!wasHandled)
             {
-                if (!script.EndsWith(".g.cs"))
-                    CSScriptHelper.DecorateIfRequired(ref code, ref caret);
+                if (!script.RawFile.EndsWith(".g.cs"))
+                    CSScriptHelper.DecorateIfRequired(ref script.Content, ref caret);
 
                 Project project = CSScriptHelper.GenerateProjectFor(script);
                 var sources = project.Files
-                                     .Where(f => f != script)
+                                     .Where(f => f != project.Script)
                                      .Select(f => new Tuple<string, string>(File.ReadAllText(f), f))
                                      .ToArray();
 
-                completions = Autocompleter.GetAutocompletionFor(code, caret, project.Refs, sources);
+                completions = Autocompleter.GetAutocompletionFor(script.Content, caret, project.Refs, sources);
 
                 var count = completions.Count();
             }
@@ -573,22 +574,22 @@ namespace Syntaxer
 
         static internal bool fullyLoaded = false;
 
-        internal static string GetTooltip(string script, int caret, string hint, bool shortHintedTooltips)
+        internal static string GetTooltip(string scriptFile, int caret, string hint, bool shortHintedTooltips)
         {
             // Simplified API for ST3
             Output.WriteLine("GetTooltip");
             //Console.WriteLine("hint: " + hint);
 
             string result = null;
-            "".EscapeLB();
-            string code = File.ReadAllText(script);
-            if (code.IsEmpty())
+
+            var script = new SourceInfo(scriptFile);
+            if (script.Content.IsEmpty())
                 throw new Exception("The file containing code is empty");
 
             void loockupDirective(string directive)
             {
                 var css_directive = CssCompletionData.AllDirectives
-                                                        .FirstOrDefault(x => x.DisplayText == directive);
+                                                     .FirstOrDefault(x => x.DisplayText == directive);
                 if (css_directive != null)
                 {
                     result = $"Directive: {css_directive.DisplayText}\n{css_directive.Description}";
@@ -596,7 +597,7 @@ namespace Syntaxer
                 }
             };
 
-            ParseAsCssDirective(script, code, caret,
+            ParseAsCssDirective(script.Content, caret,
                loockupDirective,
                (directive, arg, extensions) =>
                {
@@ -611,17 +612,17 @@ namespace Syntaxer
                 return result;
             }
 
-            if (!script.EndsWith(".g.cs"))
-                CSScriptHelper.DecorateIfRequired(ref code, ref caret);
+            if (!script.RawFile.EndsWith(".g.cs"))
+                CSScriptHelper.DecorateIfRequired(ref script.Content, ref caret);
 
             Project project = CSScriptHelper.GenerateProjectFor(script);
             var sources = project.Files
-                                 .Where(f => f != script)
+                                 .Where(f => f != project.Script)
                                  .Select(f => new Tuple<string, string>(File.ReadAllText(f), f))
                                  .ToArray();
 
             int methodStartPosTemp;
-            var items = Autocompleter.GetMemberInfo(code, caret, out methodStartPosTemp, project.Refs, sources, includeOverloads: hint.HasAny());
+            var items = Autocompleter.GetMemberInfo(script.Content, caret, out methodStartPosTemp, project.Refs, sources, includeOverloads: hint.HasAny());
             fullyLoaded = true;
             if (hint.HasAny())
             {
@@ -682,26 +683,27 @@ namespace Syntaxer
             throw new Exception($"Cannot read '{file}'");
         }
 
-        internal static string GetSignatureHelp(string script, int caret)
+        internal static string GetSignatureHelp(string scriptFile, int caret)
         {
             Output.WriteLine("GetSignatureHelp");
 
+            var script = new SourceInfo(scriptFile);
+
             string result = null;
-            string code = File.ReadAllText(script);
-            if (code.IsEmpty())
+            if (script.Content.IsEmpty())
                 throw new Exception("The file containing code is empty");
 
-            if (!script.EndsWith(".g.cs"))
-                CSScriptHelper.DecorateIfRequired(ref code, ref caret);
+            if (!script.RawFile.EndsWith(".g.cs"))
+                CSScriptHelper.DecorateIfRequired(ref script.Content, ref caret);
 
             Project project = CSScriptHelper.GenerateProjectFor(script);
             var sources = project.Files
-                                 .Where(f => f != script)
+                                 .Where(f => f != project.Script)
                                  .Select(f => new Tuple<string, string>(File.ReadAllText(f), f))
                                  .ToArray();
 
             string bestMatchIndex;
-            var items = Autocompleter.GetMethodSignatures(code, caret, out bestMatchIndex, project.Refs, sources);
+            var items = Autocompleter.GetMethodSignatures(script.Content, caret, out bestMatchIndex, project.Refs, sources);
 
             result = $"{bestMatchIndex}\r\n" + items.Select(x => x.EscapeLB())
                                                     .JoinSerializedLines();
@@ -709,16 +711,17 @@ namespace Syntaxer
             return result;
         }
 
-        internal static string GetMemberInfo(string script, int caret, bool collapseOverloads)
+        internal static string GetMemberInfo(string scriptFile, int caret, bool collapseOverloads)
         {
             // Complete API for N++
 
             Output.WriteLine("GetMemberInfo");
             //Console.WriteLine("hint: " + hint);
 
+            var script = new SourceInfo(scriptFile);
             string result = null;
-            string code = File.ReadAllText(script);
-            if (code.IsEmpty())
+
+            if (script.Content.IsEmpty())
                 throw new Exception("The file containing code is empty");
 
             void loockupDirective(string directive)
@@ -732,7 +735,7 @@ namespace Syntaxer
                 }
             };
 
-            ParseAsCssDirective(script, code, caret,
+            ParseAsCssDirective(script.Content, caret,
                loockupDirective,
                (directive, arg, extensions) =>
                {
@@ -747,17 +750,17 @@ namespace Syntaxer
                 return MemberInfoData.Serialize(new MemberInfoData { Info = result });
             }
 
-            if (!script.EndsWith(".g.cs"))
-                CSScriptHelper.DecorateIfRequired(ref code, ref caret);
+            if (!script.RawFile.EndsWith(".g.cs"))
+                CSScriptHelper.DecorateIfRequired(ref script.Content, ref caret);
 
             Project project = CSScriptHelper.GenerateProjectFor(script);
             var sources = project.Files
-                                 .Where(f => f != script)
+                                 .Where(f => f != script.File)
                                  .Select(f => new Tuple<string, string>(File.ReadAllText(f), f))
                                  .ToArray();
 
             int methodStartPosTemp;
-            var items = Autocompleter.GetMemberInfo(code, caret, out methodStartPosTemp, project.Refs, sources, includeOverloads: !collapseOverloads);
+            var items = Autocompleter.GetMemberInfo(script.Content, caret, out methodStartPosTemp, project.Refs, sources, includeOverloads: !collapseOverloads);
 
             if (collapseOverloads)
                 items = items.Take(1);
@@ -775,7 +778,7 @@ namespace Syntaxer
 
             var result = new StringBuilder();
 
-            Project project = CSScriptHelper.GenerateProjectFor(script);
+            Project project = CSScriptHelper.GenerateProjectFor(new SourceInfo(script));
             foreach (string file in project.Files)
                 result.AppendLine($"file:{file}");
 
