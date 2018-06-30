@@ -482,7 +482,7 @@ namespace Syntaxer
 
             var result = new StringBuilder();
 
-            foreach (ICompletionData item in GetCompletionRaw(script, caret))
+            foreach (ICompletionData item in GetCompletionRaw(script, caret, includDocumentation))
             {
                 string type = item.CompletionType.ToString().Replace("_event", "event").Replace("_namespace", "namespace");
                 string completion = item.CompletionText;
@@ -511,7 +511,7 @@ namespace Syntaxer
                 }
 
                 var extra = "";
-                if (includDocumentation)
+                if (includDocumentation && documentation.HasText())
                 {
                     // VSCode is the one that accepts the documentation
                     extra = $"|{documentation.EscapeLB()}";
@@ -527,7 +527,7 @@ namespace Syntaxer
             return result.ToString().Trim();
         }
 
-        internal static IEnumerable<ICompletionData> GetCompletionRaw(string scriptFile, int caret)
+        internal static IEnumerable<ICompletionData> GetCompletionRaw(string scriptFile, int caret, bool includDocumentation = false)
         {
             var script = new SourceInfo(scriptFile);
 
@@ -565,7 +565,7 @@ namespace Syntaxer
                                      .Select(f => new Tuple<string, string>(File.ReadAllText(f), f))
                                      .ToArray();
 
-                completions = Autocompleter.GetAutocompletionFor(script.Content, caret, project.Refs, sources);
+                completions = Autocompleter.GetAutocompletionFor(script.Content, caret, project.Refs, sources, includDocumentation);
 
                 var count = completions.Count();
             }

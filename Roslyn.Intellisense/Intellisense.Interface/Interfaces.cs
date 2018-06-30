@@ -55,6 +55,7 @@ namespace Intellisense.Common
         string InvokeReturn { get; }
         bool HasOverloads { get; }
         object Tag { get; set; }
+        object RawData { get; set; }
 
         IEnumerable<ICompletionData> OverloadedData { get; }
 

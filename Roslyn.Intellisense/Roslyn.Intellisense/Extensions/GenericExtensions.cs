@@ -100,6 +100,11 @@ namespace RoslynIntellisense
             return (T)obj;
         }
 
+        public static T As<T>(this object obj) where T : class
+        {
+            return obj as T;
+        }
+
         public static string PathJoin(this string path, params string[] items)
         {
             return Path.Combine(new[] { path }.Concat(items).ToArray());

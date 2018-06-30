@@ -481,7 +481,7 @@ namespace RoslynIntellisense
 
         //position is zero-based
         //public async static Task<IEnumerable<ICompletionData>> GetAutocompletionFor(string code, int position, string[] references = null, IEnumerable<Tuple<string, string>> includes = null)
-        public static IEnumerable<ICompletionData> GetAutocompletionFor(string code, int position, string[] references = null, IEnumerable<Tuple<string, string>> includes = null)
+        public static IEnumerable<ICompletionData> GetAutocompletionFor(string code, int position, string[] references = null, IEnumerable<Tuple<string, string>> includes = null, bool includDocumentation = false)
         {
             //Debug.Assert(false);
             string opContext;
@@ -553,6 +553,19 @@ namespace RoslynIntellisense
                     result = completions.Where(s => s.DisplayText.HasText())
                                         .OrderBy(c => c.DisplayText)
                                         .ToList();
+                }
+
+                // resolving XML documentation is heavy so do it only for the potentially relevant items 
+                if (includDocumentation && result.Count() < 250)
+                {
+                    foreach (var item in result)
+                    {
+                        var xmlDoc = item.RawData.As<ISymbol>()?
+                                         .GetDocumentationCommentXml();
+
+                        if (xmlDoc.HasText())
+                            item.Tag = xmlDoc.XmlToPlainText();
+                    }
                 }
 
                 if (opContext != null) //only if a single assignment/add is identified
@@ -745,14 +758,7 @@ namespace RoslynIntellisense
             var model = document.GetSemanticModelAsync().Result;
             var symbols = Recommender.GetRecommendedSymbolsAtPositionAsync(model, position, workspace).Result.ToArray();
 
-            var data = symbols.Select(s =>
-            {
-                var completion = s.ToCompletionData();
-                var xmlDoc = s.GetDocumentationCommentXml();
-                if (xmlDoc.HasText())
-                    completion.Tag = xmlDoc.XmlToPlainText();
-                return completion;
-            }).ToArray();
+            var data = symbols.Select(s => s.ToCompletionData());
 
             foreach (var group in data.GroupBy(x => x.DisplayText))
             {

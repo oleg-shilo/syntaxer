@@ -80,6 +80,7 @@ namespace Syntaxer
         public bool InvokeParametersSet { get; set; }
         public string OperationContext { get; set; }
         public object Tag { get; set; }
+        public object RawData { get; set; }
 
         public void AddOverload(ICompletionData data)
         {
