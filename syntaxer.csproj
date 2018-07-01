@@ -331,11 +331,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>rem echo "$(ProjectDir)..\..\..\cs-script.npp\src\Roslyn.Intellisesne\Roslyn.Intellisense\bin\$(ConfigurationName)\RoslynIntellisense.exe"
-rem copy "$(ProjectDir)..\..\..\cs-script.npp\src\Roslyn.Intellisesne\Roslyn.Intellisense\bin\$(ConfigurationName)\RoslynIntellisense.exe" "$(ProjectDir)Roslyn.Intellisense\RoslynIntellisense.exe" 
-rem copy "$(ProjectDir)..\..\..\cs-script.npp\src\Roslyn.Intellisesne\Roslyn.Intellisense\bin\$(ConfigurationName)\RoslynIntellisense.pdb" "$(ProjectDir)Roslyn.Intellisense\RoslynIntellisense.pdb" 
-rem copy "$(ProjectDir)..\..\..\cs-script.npp\src\Intellisense.Interface\bin\$(ConfigurationName)\Intellisense.Common.dll" "$(ProjectDir)Roslyn.Intellisense\Intellisense.Common.dll" 
-</PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PostBuildEvent>md "$(TargetDir)..\..\bin"
