@@ -139,6 +139,11 @@ namespace RoslynIntellisense
                 return default(T);
         }
 
+        public static string[] GetLines(this string data, string lineBreak = "\n")
+        {
+            return data.Split(new string[] { lineBreak }, StringSplitOptions.None);
+        }
+
         public static int GetWordStartOf(this string text, int offset)
         {
             if (text[offset] != '.') //we may be at the partially complete word

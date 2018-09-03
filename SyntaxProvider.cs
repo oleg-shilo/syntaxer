@@ -298,8 +298,10 @@ namespace Syntaxer
             if (script.Content.IsEmpty())
                 throw new Exception("The file containing code is empty");
 
+            bool decorated = false;
+
             if (!script.RawFile.EndsWith(".g.cs"))
-                CSScriptHelper.DecorateIfRequired(ref script.Content, ref offset);
+                decorated = CSScriptHelper.DecorateIfRequired(ref script.Content, ref offset);
 
             Project project = CSScriptHelper.GenerateProjectFor(script);
             var sources = project.Files
@@ -312,8 +314,17 @@ namespace Syntaxer
             if (context == "all")  // include definition and constructors
             {
                 DomRegion[] refs = Autocompleter.GetSymbolSourceRefs(script.Content, offset, script.File, project.Refs, sources);
-                foreach (var item in refs)
-                    regions.Add($"{item.FileName}({item.BeginLine},{item.BeginColumn}): ...");
+                foreach (DomRegion item in refs)
+                {
+                    DomRegion region = item;
+                    if (decorated && item.FileName == script.File)
+                    {
+                        CSScriptHelper.Undecorate(script.Content, ref region);
+                    }
+
+                    regions.Add($"{item.FileName}({region.BeginLine},{item.BeginColumn}): ...");
+
+                }
             }
 
             regions.AddRange(Autocompleter.FindReferences(script.Content, offset, script.File, project.Refs, sources));

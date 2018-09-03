@@ -216,12 +216,10 @@ namespace RoslynIntellisense
                                               var filePath = x.SourceTree.FilePath;
 
                                               var fileContent = x.SourceTree.GetText().ToString();
+
                                               int pos = fileContent.IndexOf("///CS-Script auto-class generation");
                                               if (pos != -1)
-                                              {
-                                                  if (pos < x.SourceSpan.Start)
-                                                      line--;
-                                              }
+                                                  Undecorate(fileContent, ref line);
 
                                               var hint = fileContent.Substring(x.SourceSpan.Start).Split('\n').First().Trim();
 
@@ -235,6 +233,39 @@ namespace RoslynIntellisense
                 Console.WriteLine(e);
             } //failed, no need to report, as auto-completion is expected to fail sometimes
             return new string[0];
+        }
+
+        static public void Undecorate(string text, ref int beginLine)
+        {
+            int pos = text.IndexOf("///CS-Script auto-class generation");
+            if (pos != -1)
+            {
+                // BeginLine is 1-based
+                // injectedLine is 0-based
+                var injectedLine = text.Substring(0, pos).Split('\n').Count() - 1;
+                if (injectedLine < beginLine)
+                {
+                    int injectedLines = 0;
+                    var lines = text.Substring(pos).GetLines();
+                    int index = injectedLine;
+                    string prevLine = null;
+                    foreach (var line in lines)
+                    {
+                        index++;
+
+                        if (line.StartsWith("#line ")
+                            || line.Contains("///CS-Script auto-class generation"))
+                            injectedLines++;
+
+                        if (index == beginLine)
+                            break;
+
+                        prevLine = line;
+                    }
+
+                    beginLine -= injectedLines;
+                }
+            }
         }
 
         public static DomRegion ResolveType(string typeName, string[] references = null, IEnumerable<Tuple<string, string>> includes = null)

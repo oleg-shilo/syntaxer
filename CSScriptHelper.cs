@@ -203,7 +203,71 @@ namespace Syntaxer
 
         public class AutoclassGenerator
         {
+            // public class Result
+            // {
+            //     public void Init(object source)
+            //     {
+            //         // 'dynamic' is ideal choice but it may not work very well on Linux.
+            //         // Thus reflection is more reliable for the purpose.
+            //         Content = (string)source.GetField(nameof(Content));
+            //         InjectionPos = (int)source.GetField(nameof(InjectionPos));
+            //         InjectionLength = (int)source.GetField(nameof(InjectionLength));
+            //         BodyInjectedLine = (int)source.GetField(nameof(BodyInjectedLine));
+            //         BodyInjectedLineCount = (int)source.GetField(nameof(BodyInjectedLineCount));
+            //         FooterInjectedLine = (int)source.GetField(nameof(FooterInjectedLine));
+            //         FooterInjectedLineCount = (int)source.GetField(nameof(FooterInjectedLineCount));
+            //     }
+
+            //     public string Content;
+            //     public int InjectionPos = -1;
+            //     public int InjectionLength = 0;
+            //     public int BodyInjectedLine = -1;
+            //     public int BodyInjectedLineCount = 0;
+            //     public int FooterInjectedLine = -1;
+            //     public int FooterInjectedLineCount = 0;
+            // }
+
             static public string Process(string text, ref int position)
+            {
+                try
+                {
+                    // if (csscript.Cscs_asm.GetName().Version >= new Version("3.28.7.0"))
+                    // {
+                    //     return ProcessNew(text, ref position, ref result);
+                    // }
+                    // else
+                    // {
+                    return ProcessOld(text, ref position);
+                    // }
+                }
+                catch { }
+                return null;
+            }
+
+            // static public string ProcessNew(string text, ref int position, ref Result result)
+            // {
+            //     // AutoclassPrecompiler.Result result = AutoclassPrecompiler.Process(code, ConsoleEncoding);
+            //     // injectionPos = result.InjectionPos;
+            //     // injectionLength = result.InjectionLength;
+            //     // return result.Content;
+            //     try
+            //     {
+            //         var type = csscript.Cscs_asm.GetLoadableTypes().Where(t => t.Name == "AutoclassPrecompiler").FirstOrDefault();
+            //         MethodInfo method = type.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static).Single(m => m.Name == "Process" && m.GetParameters().Length == 2);
+            //         object[] args = new object[] { text, "utf-8" };
+            //         var retval = method.Invoke(null, args);
+
+            //         result.Init(retval);
+
+            //         position = result.InjectionPos;
+
+            //         return result.Content;
+            //     }
+            //     catch { }
+            //     return null;
+            // }
+
+            static public string ProcessOld(string text, ref int position)
             {
                 //csscript.AutoclassGenerator.Process(text, ref position);
                 try
@@ -257,7 +321,7 @@ namespace Syntaxer
                 }
                 finally
                 {
-                    if(File.Exists(tempFile))
+                    if (File.Exists(tempFile))
                         try { File.Delete(tempFile); } catch { }
                 }
             }
@@ -339,7 +403,6 @@ namespace Syntaxer
 
                 text = GenerateAutoclassWrapper(text, ref currentPos);
 
-                //if (originaltext.GetHashCode() == text.GetHashCode())
                 if (!text.Contains("///CS-Script auto-class generation"))
                 {
                     currentPos = originalPos;
@@ -380,25 +443,61 @@ namespace Syntaxer
             }
             catch { }
 
+
             foreach (Match item in Regex.Matches(text, @"\s?//css_args\s+(/|-)(ac|ac:0|ac:1)(,|;\s+)"))
                 isAutoClassSupported = !item.Value.Contains("ac:0");
 
             foreach (Match item in Regex.Matches(text, @"\s?//css_args\s+(/|-)(autoclass|autoclass:0|autoclass:1)(,|;|\s+)"))
                 isAutoClassSupported = !item.Value.Contains("ac:0");
 
+            foreach (Match item in Regex.Matches(text, @"\s?//css_autoclass\s+"))
+                isAutoClassSupported = true;
+
+            foreach (Match item in Regex.Matches(text, @"\s?//css_ac\s+"))
+                isAutoClassSupported = true;
+
             return isAutoClassSupported;
         }
 
         static public void Undecorate(string text, ref DomRegion region)
         {
+            int line = region.BeginLine;
+            Undecorate(text, ref line);
+            region.BeginLine = line;
+            region.EndLine = line;
+        }
+        static public void Undecorate(string text, ref int beginLine)
+        {
             int pos = text.IndexOf("///CS-Script auto-class generation");
             if (pos != -1)
             {
+                // BeginLine is 1-based
+                // injectedLine is 0-based
                 var injectedLine = text.Substring(0, pos).Split('\n').Count() - 1;
-                if (injectedLine < region.BeginLine)
+                if (injectedLine < beginLine)
                 {
-                    region.BeginLine--;
-                    region.EndLine--;
+                    // hardcode it for now but in the future rely on the 
+                    // result structure produced by DecorateIfRequired
+
+                    int injectedLines = 0;
+                    var lines = text.Substring(pos).GetLines();
+                    int index = injectedLine;
+                    string prevLine = null;
+                    foreach (var line in lines)
+                    {
+                        index++;
+
+                        if (line.StartsWith("#line ")
+                            || line.Contains("///CS-Script auto-class generation"))
+                            injectedLines++;
+
+                        if (index == beginLine)
+                            break;
+
+                        prevLine = line;
+                    }
+
+                    beginLine -= injectedLines;
                 }
             }
         }

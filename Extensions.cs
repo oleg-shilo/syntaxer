@@ -289,6 +289,14 @@ namespace Syntaxer
             return -1;
         }
 
+        public static object GetField(this object obj, string name)
+        {
+            var field = obj.GetType().GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (field == null)
+                throw new Exception("ReflectionExtensions: cannot find property " + name);
+            return field.GetValue(obj);
+        }
+
         public static IEnumerable<Type> GetLoadableTypes(this Assembly assembly)
         {
             if (assembly == null)
