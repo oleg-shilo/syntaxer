@@ -66,6 +66,8 @@ namespace Syntaxer
             Output.WriteLine(mono_root);
             AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
 
+            TestIntellisenseCommon();
+
             Run(input);
         }
 
@@ -172,6 +174,16 @@ namespace Syntaxer
             // _action("CSSRoslynProvider.dll", syntaxer.Properties.Resources.CSSRoslynProvider);
             _action("Intellisense.Common.dll", syntaxer.Properties.Resources.Intellisense_Common);
             _action("RoslynIntellisense.exe", syntaxer.Properties.Resources.RoslynIntellisense);
+        }
+
+        public static void TestIntellisenseCommon()
+        {
+            // the distro can be accidentally packed with the wrong assembly (older) version
+            var assembly = typeof(ICompletionData).Assembly.GetName();
+            if (assembly.Version < new Version("1.0.1.0"))
+                throw new Exception(
+                    $"Invalid {assembly.Name} version v{assembly.Version}\n" +
+                    $"Must be at least v1.0.1.0");
         }
 
         static void ForEachRoslynAssembly(Action<string, byte[]> action)

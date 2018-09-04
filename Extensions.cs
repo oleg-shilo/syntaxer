@@ -522,7 +522,7 @@ namespace Syntaxer
         }
 
         public static string[] GetLines(this string data, string lineBreak = "\n")
-        {
+        { 
             return data.Split(new string[] { lineBreak }, StringSplitOptions.None);
         }
 
