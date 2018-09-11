@@ -1,20 +1,11 @@
 using System;
 using System.Linq;
-using System.Collections.Generic;
 using System.IO;
-using System.Net;
-using System.Net.Sockets;
 using System.Reflection;
-using System.Text;
 using Intellisense.Common;
 using RoslynIntellisense;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Xml;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
-using System.Diagnostics;
-using Syntaxer;
 using System.Xml.Linq;
 
 namespace Syntaxer
@@ -364,10 +355,11 @@ namespace Syntaxer
 
             if (stripInjectedClass && injected)
             {
-                //only remove if "main()" was decorated with global
-                if (map.Any(x => x.ParentDisplayName.StartsWith("<Global")))
-                    map = map.Where(x => x.ParentDisplayName != "ScriptClass").ToArray();
+                map = map.Where(x => !x.ParentDisplayName.StartsWith("<Global")).ToArray();
             }
+
+            // ignore non user methods
+            map = map.Where(x => !(x.ParentDisplayName.StartsWith("<Global") && x.DisplayName == "main_impl()")).ToArray();
 
             if (injected)
             {
@@ -381,8 +373,9 @@ namespace Syntaxer
 
                 foreach (CodeMapItem item in map)
                 {
-                    if (item.Line >= injectedLine)
-                        item.Line -= 1;
+                    var region = new DomRegion { BeginLine = item.Line, EndLine = item.Line };
+                    Undecorate(code, ref region);
+                    item.Line = region.BeginLine;
                 }
             }
             return map;
@@ -466,6 +459,7 @@ namespace Syntaxer
             region.BeginLine = line;
             region.EndLine = line;
         }
+
         static public void Undecorate(string text, ref int beginLine)
         {
             int pos = text.IndexOf("///CS-Script auto-class generation");

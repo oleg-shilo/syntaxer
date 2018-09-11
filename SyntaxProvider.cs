@@ -89,7 +89,7 @@ namespace Syntaxer
                 else if (args.op == "codemap")
                     result = CodeMap(args.script, args.rich, false);
                 else if (args.op == "codemap_vscode")
-                    result = CodeMap(args.script, args.rich, vsCode: true);
+                    result = CodeMap(args.script, args.rich, vsCodeSerialization: true);
                 else if (args.op == "format")
                 {
                     Output.WriteLine("FormatCode>");
@@ -134,9 +134,11 @@ namespace Syntaxer
             }
         }
 
-        static string GetAssociatedFileExtensions(string directive)
+        static string GetAssociatedCompletionContext(string directive)
         {
             return directive.FirstMatch(("//css_inc", ".cs"),
+                                        ("//css_ac", "style"),
+                                        ("//css_autoclass", "style"),
                                         ("//css_include", ".cs"),
                                         ("//css_ref", ".dll|.exe"),
                                         ("//css_reference", ".dll|.exe"));
@@ -149,7 +151,7 @@ namespace Syntaxer
             if (word.StartsWith("//css_") || line.TrimStart().StartsWith("//css_"))
             {
                 var directive = line.TrimStart().WordAt(2, true);
-                string extensions = GetAssociatedFileExtensions(directive);
+                string extensions = GetAssociatedCompletionContext(directive);
 
                 var arg = word;
 
@@ -181,7 +183,7 @@ namespace Syntaxer
 
         internal static string LookopDirectivePath(SourceInfo script, int offset, string directive, string word, string extensions = null)
         {
-            extensions = extensions ?? GetAssociatedFileExtensions(directive);
+            extensions = extensions ?? GetAssociatedCompletionContext(directive);
 
             if (extensions != null && word.HasText()) // file of the //css_inc or //css_ref directive
             {
@@ -383,23 +385,24 @@ namespace Syntaxer
             return formattedCode;
         }
 
-        internal static string CodeMap(string script, bool rich_serialization, bool vsCode)
+        internal static string CodeMap(string script, bool nppSerialization, bool vsCodeSerialization)
         {
             csscript.Log("CodeMap");
+
+            bool vs_code = vsCodeSerialization;
+            bool sublime = !vsCodeSerialization && !nppSerialization;
+
             string code = File.ReadAllText(script);
 
             if (code.IsEmpty())
                 throw new Exception("The file containing code is empty");
 
-            CodeMapItem[] members = CSScriptHelper.GetMapOf(code, true).OrderBy(x => x.ParentDisplayName).ToArray();
+            CodeMapItem[] members = CSScriptHelper.GetMapOf(code, nppSerialization).OrderBy(x => x.ParentDisplayName).ToArray();
 
             fullyLoaded = true;
 
-            bool notepad_pp = rich_serialization;
-            bool vs_code = vsCode;
-            bool sublime = !vsCode && !notepad_pp;
 
-            if (notepad_pp)
+            if (nppSerialization)
             {
                 return members.Select(CodeMapItem.Serialize).JoinSerializedLines();
             }
@@ -554,14 +557,26 @@ namespace Syntaxer
               },
               (directive, arg, extensions) =>
               {
-                  completions = LookupDirectivePaths(script, caret, directive, arg, extensions)
-                                                .Select(file => new CssCompletionData
-                                                {
-                                                    CompletionText = Path.GetFileName(file),
-                                                    DisplayText = Path.GetFileName(file),
-                                                    Description = "File: " + file,
-                                                    CompletionType = CompletionType.file
-                                                });
+                  if (directive.OneOf("//css_ac", "//css_autoclass"))
+                  {
+                      completions = new[]{
+                        new CssCompletionData
+                        {
+                            CompletionText = "freestyle",
+                            DisplayText = "freestyle",
+                            Description = "Free style code without any entry point.",
+                            CompletionType = CompletionType.directive
+                        }};
+                  }
+                  else
+                      completions = LookupDirectivePaths(script, caret, directive, arg, extensions)
+                                                    .Select(file => new CssCompletionData
+                                                    {
+                                                        CompletionText = Path.GetFileName(file),
+                                                        DisplayText = Path.GetFileName(file),
+                                                        Description = "File: " + file,
+                                                        CompletionType = CompletionType.file
+                                                    });
               },
               ignoreEmptyArgs: false);
 
@@ -799,6 +814,20 @@ namespace Syntaxer
             return result.ToString().Trim();
         }
 
+        public static string testAutoClassCode = @"//css_ac
+using System;
+using System.Diagnostics;
+
+  void main(string[] args)
+{
+       Console.WriteLine(""Hello World!"");
+}";
+        public static string testFreestyleCode = @"//css_ac freestyle
+using System;
+using System.Diagnostics;
+
+    Console.WriteLine(""Hello World!"");
+";
         public static string testCode = @"using System;
 using System.Windows.Forms;
 

@@ -13,10 +13,11 @@ namespace Syntaxer
         {
             var trigegr_loadig_var = csscript.Cscs_asm;
             // Test.SuggestUsings(); return;
-            Test.SignatureHelp(); return;
+            // Test.SignatureHelp(); return;
             // Test.Resolving();
             // Test.AssignmentCompletion(); return;
             // Test.Renaming();
+            Test.CodeMapVSCode();
             // Test.Format();
             // Test.Project();
             // Test.Tooltip();
@@ -39,13 +40,56 @@ namespace Syntaxer
                 // var dummyWorkspace = MSBuildWorkspace.Create();
                 // SyntaxTree tree = CSharpSyntaxTree.ParseText(SyntaxProvider.testCode.Trim());
                 // SyntaxNode root = Microsoft.CodeAnalysis.Formatting.Formatter.Format(tree.GetRoot(), dummyWorkspace);
-                RoslynIntellisense.Formatter.FormatHybrid(SyntaxProvider.testCode, "code.cs");
+                RoslynIntellisense.Formatter.FormatHybrid(SyntaxProvider.testFreestyleCode, "code.cs");
                 Output.WriteLine("OK");
             }
             catch (Exception e)
             {
                 Output.WriteLine("failed");
                 Output.WriteLine(e);
+            }
+        }
+
+        public static void CodeMapVSCode()
+        {
+            var script = Path.GetTempFileName();
+
+            Output.WriteLine("---");
+            Output.Write("CodeMap-VSCode: ");
+
+            try
+            {
+                var code = @"//css_autoclass 
+using System;
+
+void main()
+{
+    void ttt()
+    {
+    }
+}
+
+//css_ac_end
+
+static class Extensions
+{
+    static public void Convert(this string text)
+    {
+    }
+}";
+                File.WriteAllText(script, code);
+                var map = SyntaxProvider.CodeMap(script, false, true);
+
+                Output.WriteLine("OK");
+            }
+            catch (Exception e)
+            {
+                Output.WriteLine("failed");
+                Output.WriteLine(e);
+            }
+            finally
+            {
+                try { File.Delete(script); } catch { }
             }
         }
 
