@@ -9,7 +9,7 @@ using System.Text;
 
 namespace Syntaxer
 {
-    internal class SourceInfo
+    class SourceInfo
     {
         static char[] lineDelimiters = new [] { '\n' };
 
@@ -35,6 +35,8 @@ namespace Syntaxer
         public string File;
         public string Content;
     }
+
+
 
     // There is NodeLabelEditEventArgs warranty that `Console.WriteLine` is always a safe call.
     // Particularly because the code is to be run on various OS and runtimes.

@@ -353,31 +353,27 @@ namespace Syntaxer
             bool injected = DecorateIfRequired(ref code);
             CodeMapItem[] map = Autocompleter.GetMapOf(code, injected);
 
-            if (stripInjectedClass && injected)
+
+            if (injected && map.Any())
             {
-                map = map.Where(x => !x.ParentDisplayName.StartsWith("<Global")).ToArray();
-            }
+                var lines = code.Split("\n".ToCharArray(), map.Last().Line+5) // +5 to ensure the current line is in
+                                .Select(x=>x.Trim())
+                                .ToArray();
+                
+                var injectionMarker = "///CS-Script auto-class generation";
+                var debugSymbol = "#line ";
 
-            // ignore non user methods
-            map = map.Where(x => !(x.ParentDisplayName.StartsWith("<Global") && x.DisplayName == "main_impl()")).ToArray();
-
-            if (injected)
-            {
-                var injectedLine = int.MaxValue;
-
-                int pos = code.IndexOf("///CS-Script auto-class generation");
-                if (pos != -1)
-                    injectedLine = code.Substring(0, pos).Split('\n').Count() - 1;
-
-                map = map.Where(i => i.Line != injectedLine).ToArray();
+                map = map.Where(i => !lines[i.Line-1].EndsWith(injectionMarker)).ToArray();
 
                 foreach (CodeMapItem item in map)
                 {
-                    var region = new DomRegion { BeginLine = item.Line, EndLine = item.Line };
-                    Undecorate(code, ref region);
-                    item.Line = region.BeginLine;
+                    var injectedLinesAbove = lines.Take(item.Line - 1)
+                                                  .Count(x => x.EndsWith(injectionMarker) || 
+                                                              x.StartsWith(debugSymbol));
+                    item.Line -= injectedLinesAbove;
                 }
             }
+
             return map;
         }
 
