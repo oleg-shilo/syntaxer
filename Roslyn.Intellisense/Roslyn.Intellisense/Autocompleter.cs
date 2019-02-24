@@ -1,21 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using Intellisense.Common;
+using System.Windows.Forms;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Recommendations;
 using Microsoft.CodeAnalysis.Text;
-using System.Windows.Forms;
+using Intellisense.Common;
 using VB = Microsoft.CodeAnalysis.VisualBasic;
-using System.Diagnostics;
 
 namespace RoslynIntellisense
 {
@@ -67,22 +67,23 @@ namespace RoslynIntellisense
         }
 
         static internal Lazy<MetadataReference[]> builtInLibs = new Lazy<MetadataReference[]>(
-         delegate
-         {
-             Assembly[] assemblies = {
-                    typeof(object).Assembly,                    // mscorlib.dll
-                    typeof(Uri).Assembly,                       // System.dll
-                    typeof(Form).Assembly,                      // System.Windows.Forms.dll
-                    typeof(System.Linq.Enumerable).Assembly,    // System.Core.dll
-                    typeof(System.Xml.XmlDocument).Assembly,    // System.Xml.dll
-                    typeof(System.Drawing.Bitmap).Assembly,     // System.Drawing.dll
-              };
+        delegate
+        {
+            Assembly[] assemblies =
+            {
+                typeof(object).Assembly,                    // mscorlib.dll
+                typeof(Uri).Assembly,                       // System.dll
+                typeof(Form).Assembly,                      // System.Windows.Forms.dll
+                typeof(System.Linq.Enumerable).Assembly,    // System.Core.dll
+                typeof(System.Xml.XmlDocument).Assembly,    // System.Xml.dll
+                typeof(System.Drawing.Bitmap).Assembly,     // System.Drawing.dll
+            };
 
-             return assemblies.Select(a =>
+            return assemblies.Select(a =>
                 {
                     return MetadataReference.CreateFromFile(a.Location, documentation: NppDocumentationProvider.NewFor(a.Location));
                 }).ToArray();
-         });
+        });
 
         public static Document WithWorkspace(string code, string[] references = null, IEnumerable<Tuple<string, string>> includes = null)
         {
@@ -121,12 +122,12 @@ namespace RoslynIntellisense
         //mscorlib, systemCore
         public static string[] defaultRefs = new string[]
         {
-                    typeof(object).Assembly.Location,                    // mscorlib.dll
-                    typeof(Uri).Assembly.Location,                       // System.dll
-                    typeof(Form).Assembly.Location,                      // System.Windows.Forms.dll
-                    typeof(System.Linq.Enumerable).Assembly.Location,    // System.Core.dll
-                    typeof(System.Xml.XmlDocument).Assembly.Location,    // System.Xml.dll
-                    typeof(System.Drawing.Bitmap).Assembly.Location      // System.Drawing.dll
+            typeof(object).Assembly.Location,                    // mscorlib.dll
+            typeof(Uri).Assembly.Location,                       // System.dll
+            typeof(Form).Assembly.Location,                      // System.Windows.Forms.dll
+            typeof(System.Linq.Enumerable).Assembly.Location,    // System.Core.dll
+            typeof(System.Xml.XmlDocument).Assembly.Location,    // System.Xml.dll
+            typeof(System.Drawing.Bitmap).Assembly.Location      // System.Drawing.dll
         };
 
         public static char[] Delimiters = "\\\t\n\r .,:;'\"=[]{}()+-/!?@$%^&*«»><#|~`".ToCharArray();
@@ -514,7 +515,7 @@ namespace RoslynIntellisense
         //public async static Task<IEnumerable<ICompletionData>> GetAutocompletionFor(string code, int position, string[] references = null, IEnumerable<Tuple<string, string>> includes = null)
         public static IEnumerable<ICompletionData> GetAutocompletionFor(string code, int position, string[] references = null, IEnumerable<Tuple<string, string>> includes = null, bool includDocumentation = false)
         {
-            //Debug.Assert(false);
+            // Debug.Assert(false);
             string opContext;
 
             string partialWord;
@@ -552,7 +553,8 @@ namespace RoslynIntellisense
                                 }
                             }
 
-                            return new[]{
+                            return new[]
+                            {
                                 new CompletionData
                                 {
                                     DisplayText = initializationExpression,
@@ -586,8 +588,9 @@ namespace RoslynIntellisense
                                         .ToList();
                 }
 
-                // resolving XML documentation is heavy so do it only for the potentially relevant items 
-                if (includDocumentation && result.Count() < 250)
+                // resolving XML documentation is heavy so do it only for the potentially relevant items
+                // and if it will not take too long. Practical limit of counts found by experiment.
+                if (includDocumentation && result.Count() < 100)
                 {
                     foreach (var item in result)
                     {

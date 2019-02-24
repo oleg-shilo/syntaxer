@@ -1,12 +1,12 @@
 using System;
-using System.Linq;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Xml.Linq;
 using Intellisense.Common;
 using RoslynIntellisense;
-using System.Threading;
-using System.Text.RegularExpressions;
-using System.Xml.Linq;
 
 namespace Syntaxer
 {
@@ -121,8 +121,8 @@ namespace Syntaxer
             internal static string cscs_GetScriptTempDir()
             {
                 return (string)csscript.Cscs_asm.GetLoadableTypes().Where(t => t.Name == "CSExecutor").First()
-                                                   .GetMethod("GetScriptTempDir", BindingFlags.Public | BindingFlags.Static)
-                                                   .Invoke(null, new object[0]);
+                                                .GetMethod("GetScriptTempDir", BindingFlags.Public | BindingFlags.Static)
+                                                    .Invoke(null, new object[0]);
             }
 
             static public Project GenerateProjectFor(string script)
@@ -287,14 +287,29 @@ namespace Syntaxer
             else
             {
                 // The input file is not the actual script file.
-                // For example the script file in the editor is modified but unsaved and teh editor
-                // uses temp file for intellisense. 
-                var tempFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + script.File.GetFileExtension());
+                // For example the script file in the editor is modified but unsaved and the editor
+                // uses temp file for intellisense.
+                // However this screws relative paths, so need to save it in the same dir if possible.
+
+                string tempFile = "";
+
                 try
                 {
-                    var dir_instruction = "//css_dir " + script.File.GetDirName();
+                    try
+                    {
+                        // Need to ensure the original dir is used for probing if the temp script is stored in
+                        // Path.GetTempPath().
+                        // var dir_instruction = "//css_dir " + script.File.GetDirName();
+                        // File.WriteAllText(tempFile, dir_instruction + Environment.NewLine + script.Content);
+                        tempFile = Path.Combine(script.File.GetDirName(), ".temp." + script.File.GetFileExtension());
+                        File.WriteAllText(tempFile, script.Content);
+                    }
+                    catch
+                    {
+                        // may fail if the dir is not enough write privileges
+                        tempFile = script.File;
+                    }
 
-                    File.WriteAllText(tempFile, dir_instruction + Environment.NewLine + script.Content);
                     var project = Project.GenerateProjectFor(tempFile);
 
                     project.Script = script.File;
@@ -312,7 +327,7 @@ namespace Syntaxer
                 }
                 finally
                 {
-                    if (File.Exists(tempFile))
+                    if (tempFile != "" && File.Exists(tempFile) && tempFile != script.File)
                         try { File.Delete(tempFile); } catch { }
                 }
             }
@@ -436,7 +451,6 @@ namespace Syntaxer
             }
             catch { }
 
-
             foreach (Match item in Regex.Matches(text, @"\s?//css_args\s+(/|-)(ac|ac:0|ac:1)(,|;\s+)"))
                 isAutoClassSupported = !item.Value.Contains("ac:0");
 
@@ -470,7 +484,7 @@ namespace Syntaxer
                 var injectedLine = text.Substring(0, pos).Split('\n').Count() - 1;
                 if (injectedLine < beginLine)
                 {
-                    // hardcode it for now but in the future rely on the 
+                    // hardcode it for now but in the future rely on the
                     // result structure produced by DecorateIfRequired
 
                     int injectedLines = 0;
