@@ -913,6 +913,7 @@ namespace RoslynIntellisense
                     if (member is MethodDeclarationSyntax)
                     {
                         var method = (member as MethodDeclarationSyntax);
+
                         map.Add(new CodeMapItem
                         {
                             Line = method.GetLocation().GetLineSpan().StartLinePosition.Line + 1,
