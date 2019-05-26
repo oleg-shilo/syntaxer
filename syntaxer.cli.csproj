@@ -60,7 +60,8 @@ rem copy "$(ProjectDir)..\..\..\CS-Script.Npp\src\Intellisense.Interface\bin\$(C
 </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>rem copy "$(TargetPath)" "$(ProjectDir)..\cs-script.package\bin\$(TargetFileName)"</PostBuildEvent>
+    <PostBuildEvent>rem copy "$(TargetPath)" "$(ProjectDir)..\cs-script.package\bin\$(TargetFileName)"
+copy "$(TargetPath)" "$(TargetDir)..\..\bin\$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

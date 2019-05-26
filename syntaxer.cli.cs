@@ -31,10 +31,11 @@ namespace Syntaxer
             {
                 using (var clientSocket = new TcpClient())
                 {
-                    clientSocket.Connect(IPAddress.Loopback, 18000);
+                    var port = int.Parse(args.First());
+                    clientSocket.Connect(IPAddress.Loopback, port);
 
-                    var message = string.Join("\n", args);
-                    Console.WriteLine("Sending: " + message);
+                    var message = string.Join("\n", args.Skip(1).ToArray());
+                    // Console.WriteLine("Sending: " + message);
                     clientSocket.WriteAllBytes(message.GetBytes());
 
                     string response = clientSocket.ReadAllBytes().GetString();
